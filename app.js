@@ -353,38 +353,43 @@ function renderMembers() {
   const list = state.data.members;
   const st = memberStats(list);
   $('#memberStats').innerHTML = [
-    ['🙋', st.count, 'Đăng ký', COLORS[0]],
-    ['🧑', st.adults, 'Người lớn', COLORS[2]],
-    ['🧒', st.children, 'Trẻ em', COLORS[4]],
-    ['🎉', st.people, 'Tổng', COLORS[1]],
-  ].map(s => `<div class="stat" style="--c:${s[3]}"><div class="emo">${s[0]}</div><b>${s[1]}</b><span>${s[2]}</span></div>`).join('');
+    [st.count, 'đăng ký', COLORS[0]],
+    [st.adults, 'người lớn', COLORS[2]],
+    [st.children, 'trẻ em', COLORS[4]],
+    [st.people, 'tổng', COLORS[1]],
+  ].map(s => `<div class="stat" style="--c:${s[2]}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('');
 
   const q = norm($('#memberSearch').value);
   const me = norm(store.get('travel_name'));
   const rows = list
     .map((m, i) => ({ m, i }))
     .filter(({ m }) => !q || norm([m.name, m.roommate, m.room, m.note].join(' ')).includes(q));
+  const unset = '<span class="unset">Chưa xếp</span>';
 
+  // Mỗi người một dòng. Desktop: bảng nhiều cột (.m-det bị "trải" thành các cột).
+  // Điện thoại: tên ở dòng 1, số người + phòng ở dòng 2, ghi chú ở dòng 3.
   $('#memberList').innerHTML = rows.length
-    ? rows.map(({ m, i }) => `<li class="card member ${me && norm(m.name) === me ? 'me' : ''}">
-        ${avatar(m.name)}
-        <div>
-          <div class="top">
-            <b>${esc(m.name)}</b>
-            ${m.family
-              ? '<span class="tag" style="--c:var(--sea)">👨‍👩‍👧 Cả nhà</span>'
-              : '<span class="tag" style="--c:var(--grape)">🎒 Solo</span>'}
-            ${me && norm(m.name) === me ? '<span class="tag" style="--c:var(--coral)">Bạn</span>' : ''}
-          </div>
-          <div class="meta">#${i + 1}${m.family ? ` · +${m.adults} người lớn · +${m.children} trẻ em` : ''}</div>
-          <div class="room">
-            <span>🛏️ ${m.room ? `<b>${esc(m.room)}</b>` : '<span class="unset">Chưa xếp phòng</span>'}</span>
-            <span>👥 ${m.roommate ? `Ở cùng <b>${esc(m.roommate)}</b>` : '<span class="unset">Chưa xếp bạn cùng phòng</span>'}</span>
-          </div>
-          ${m.note ? `<p class="note">📝 ${esc(m.note)}</p>` : ''}
-        </div>
-      </li>`).join('')
-    : `<li class="card empty">${q ? '🔍 Không tìm thấy ai' : '🙋 Chưa có ai đăng ký, hãy là người đầu tiên!'}</li>`;
+    ? `<li class="m-row m-head" aria-hidden="true">
+         <span class="m-idx">#</span><span class="m-who">Thành viên</span>
+         <span class="m-det"><span class="m-adults">Người lớn</span><span class="m-kids">Trẻ em</span>
+         <span class="m-room">Loại phòng</span><span class="m-mate">Ở cùng</span></span>
+         <span class="m-note">Ghi chú</span>
+       </li>` +
+      rows.map(({ m, i }) => {
+        const isMe = me && norm(m.name) === me;
+        return `<li class="m-row ${isMe ? 'me' : ''}">
+          <span class="m-idx">${i + 1}</span>
+          <span class="m-who">${avatar(m.name, 'sm')}<b>${esc(m.name)}</b>${isMe ? '<span class="tag" style="--c:var(--coral)">Bạn</span>' : ''}</span>
+          <span class="m-det">
+            <span class="m-adults" title="Người lớn (tính cả người đăng ký)">${1 + m.adults}</span>
+            <span class="m-kids" title="Trẻ em">${m.children}</span>
+            <span class="m-room">${m.room ? esc(m.room) : unset}</span>
+            <span class="m-mate">${m.roommate ? esc(m.roommate) : unset}</span>
+          </span>
+          <span class="m-note">${esc(m.note)}</span>
+        </li>`;
+      }).join('')
+    : `<li class="empty">${q ? '🔍 Không tìm thấy ai' : '🙋 Chưa có ai đăng ký, hãy là người đầu tiên!'}</li>`;
 
   renderBudget();
   renderCrowd();

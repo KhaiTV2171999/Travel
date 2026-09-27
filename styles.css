@@ -206,14 +206,14 @@ main { max-width: 640px; margin: 0 auto; }
 .icon-btn.spinning svg { animation: spin .8s linear infinite; }
 
 /* ============ Page hero (Đăng ký / Danh sách / Bình luận) ============ */
-.page-hero { position: relative; overflow: hidden; color: #fff; padding: 26px 18px 58px; background: var(--grad-bg, var(--grad)); }
+.page-hero { position: relative; overflow: hidden; color: #fff; padding: 18px 18px 44px; background: var(--grad-bg, var(--grad)); }
 .page-hero .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; position: relative; z-index: 2; }
-.page-hero h1 { font-size: 30px; font-weight: 800; }
+.page-hero h1 { font-size: 26px; font-weight: 800; }
 .page-hero p { margin: 4px 0 0; opacity: .95; font-weight: 500; }
-.page-hero .deco { position: absolute; right: 14px; bottom: 22px; font-size: 64px; opacity: .9; transform: rotate(-10deg); z-index: 1; }
-.page-hero .waves { height: 40px; }
-.page-hero + .page { margin-top: -18px; position: relative; z-index: 4; }
-.page-hero:has(.icon-btn) .deco { right: 16px; bottom: 26px; font-size: 44px; line-height: 1; }
+.page-hero .deco { position: absolute; right: 14px; bottom: 18px; font-size: 46px; line-height: 1; opacity: .9; transform: rotate(-10deg); z-index: 1; }
+.page-hero .waves { height: 30px; }
+.page-hero + .page { margin-top: -12px; position: relative; z-index: 4; }
+.page-hero:has(.icon-btn) .deco { right: 64px; bottom: 16px; font-size: 40px; }
 #tab-list .page-hero { --grad-bg: linear-gradient(135deg, #14b8a6, #3b82f6 60%, #8b5cf6); }
 #tab-comments .page-hero { --grad-bg: linear-gradient(135deg, #ffb020, #ff6b4a 55%, #ec4899); }
 
@@ -258,30 +258,45 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 18px; min-width
 .form-error { margin: 0; color: var(--danger); background: var(--danger-soft); padding: 10px 14px; border-radius: 14px; font-size: 14px; font-weight: 600; }
 
 /* ============ Members ============ */
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.stat { background: var(--surface); border-radius: 18px; padding: 12px 4px; text-align: center; box-shadow: var(--shadow-sm); }
-.stat .emo { font-size: 20px; }
-.stat b { display: block; font-family: var(--font-display); font-size: 26px; line-height: 1.1; color: var(--c); font-variant-numeric: tabular-nums; }
-.stat span { font-size: 12px; color: var(--muted); font-weight: 600; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; justify-content: center;
+         background: var(--surface); border-radius: 16px; padding: 10px 14px; box-shadow: var(--shadow-sm); }
+.stat { display: flex; align-items: baseline; gap: 5px; }
+.stat b { font-family: var(--font-display); font-size: 22px; line-height: 1; color: var(--c); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 14px; color: var(--muted); }
 .search { position: relative; }
 .search input { padding-left: 42px; background: var(--surface); box-shadow: var(--shadow-sm); }
 .search svg { position: absolute; left: 14px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); color: var(--muted); }
-.member-list, .comment-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.member { display: grid; grid-template-columns: 46px 1fr; gap: 12px; }
-.member.me { box-shadow: 0 0 0 2px var(--coral), var(--shadow-sm); }
+.comment-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+
+.member-list { list-style: none; margin: 0; padding: 0 14px; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.m-row { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "who idx" "det det" "note note";
+         gap: 4px 10px; padding: 12px 0; border-top: 1px dashed var(--line); }
+.m-row:first-of-type, .m-head + .m-row { border-top: 0; }
+.m-head { display: none; }
+.m-row.me { background: linear-gradient(90deg, color-mix(in srgb, var(--coral) 9%, transparent), transparent 70%);
+            margin: 0 -14px; padding-left: 14px; padding-right: 14px; }
+.m-idx { grid-area: idx; color: var(--muted); font-size: 14px; }
+.m-idx::before { content: "#"; }
+.m-who { grid-area: who; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.m-who b { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-det { grid-area: det; display: flex; flex-wrap: wrap; gap: 2px 14px; padding-left: 42px; font-size: 14.5px; }
+.m-adults::after { content: " người lớn"; }
+.m-kids::after { content: " trẻ em"; }
+.m-kids::before { content: "· "; color: var(--muted); }
+.m-adults { margin-right: -8px; }
+.m-room::before { content: "🛏️ "; }
+.m-mate::before { content: "👥 "; }
+.m-note { grid-area: note; padding-left: 42px; font-size: 14px; color: var(--muted); }
+.m-note:empty { display: none; }
+.m-note:not(:empty)::before { content: "📝 "; }
+.unset { color: var(--muted); }
+.member-list .empty { padding: 20px 0; }
+
 .avatar { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 800;
           font-family: var(--font-display); font-size: 19px; flex: none; }
 .avatar.sm { width: 34px; height: 34px; font-size: 14px; }
-.member .top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.member .top b { font-size: 16.5px; }
-.tag { font-size: 12px; padding: 3px 9px; border-radius: 999px; font-weight: 700;
+.tag { font-size: 12px; padding: 3px 9px; border-radius: 999px; font-weight: 700; flex: none;
        background: color-mix(in srgb, var(--c, var(--sea)) 16%, transparent); color: var(--c, var(--sea)); }
-.member .meta { font-size: 14px; color: var(--muted); margin-top: 2px; }
-.room { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.room span { font-size: 13px; padding: 5px 10px; border-radius: 12px; background: var(--surface-2); }
-.room span b { font-weight: 700; }
-.room .unset { color: var(--muted); }
-.member .note { margin: 8px 0 0; font-size: 14px; white-space: pre-line; color: var(--muted); }
 
 /* ============ Comments ============ */
 .comment { display: flex; gap: 10px; align-items: flex-end; }
@@ -348,17 +363,17 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 18px; min-width
   .hero h1 { font-size: 46px; }
   .hero:not(.has-img) h1 { padding-right: 140px; }
   .sun { top: 28px; right: 44px; width: 88px; height: 88px; }
-  .page-hero { padding: 36px 44px 64px; }
-  .page-hero h1 { font-size: 38px; }
-  .page-hero .deco, .page-hero:has(.icon-btn) .deco { font-size: 72px; right: 44px; bottom: 30px; }
-  .page-hero:has(.icon-btn) .deco { right: 110px; }
+  .page-hero { padding: 26px 40px 50px; }
+  .page-hero h1 { font-size: 32px; }
+  .page-hero .deco, .page-hero:has(.icon-btn) .deco { font-size: 54px; right: 40px; bottom: 26px; }
+  .page-hero:has(.icon-btn) .deco { right: 104px; }
   .page-hero .icon-btn { width: 48px; height: 48px; }
 
   .crowd { margin: -28px 0 0 44px; width: fit-content; }
   .subtabs { padding: 18px 0 10px; gap: 8px; }
   .subtabs button { flex: none; padding: 10px 22px; font-size: 16px; }
   .page { padding: 16px 0 24px; gap: 24px; }
-  .page-hero + .page { margin-top: -24px; }
+  .page-hero + .page { margin-top: -16px; }
   .card { padding: 24px; }
 
   /* Tổng quan: giới thiệu bên trái, thông tin bên phải */
@@ -384,11 +399,24 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 18px; min-width
   /* Đăng ký: form ở giữa */
   #regForm, #regClosed { width: 100%; max-width: 640px; margin: 0 auto; }
 
-  /* Danh sách: lưới */
-  #tab-list .page { grid-template-columns: 1fr 360px; }
-  #memberStats { grid-column: 1; }
-  #tab-list .search { grid-column: 2; grid-row: 1; align-self: center; }
-  .member-list { grid-column: 1 / -1; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  /* Danh sách: thống kê + tìm kiếm 1 hàng, thành viên dạng bảng */
+  #tab-list .page { grid-template-columns: auto 340px; justify-content: space-between; align-items: center; }
+  #memberStats { justify-content: flex-start; gap: 6px 22px; padding: 12px 20px; }
+  .member-list { grid-column: 1 / -1; padding: 0 20px; }
+  .m-row { grid-template-columns: 36px minmax(200px, 1.6fr) 96px 72px minmax(130px, 1fr) minmax(130px, 1fr) minmax(140px, 1.3fr);
+           grid-template-areas: none; align-items: center; gap: 12px; padding: 10px 0; }
+  .m-row > *, .m-det > * { grid-area: auto; }
+  .m-det { display: contents; }
+  .m-head { display: grid; padding: 14px 0 10px; font-size: 13px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid var(--line); }
+  .m-head .m-who { font-weight: 700; }
+  .m-head + .m-row { border-top: 0; }
+  .m-row.me { margin: 0 -20px; padding-left: 20px; padding-right: 20px; }
+  .m-adults::after, .m-kids::after, .m-idx::before, .m-kids::before, .m-room::before, .m-mate::before, .m-note:not(:empty)::before { content: none; }
+  .m-adults, .m-kids { text-align: center; font-variant-numeric: tabular-nums; margin: 0; white-space: nowrap; }
+  .m-note, .m-det { padding-left: 0; }
+  .m-note:empty { display: block; }
+  .m-note { font-size: 14.5px; }
 
   /* Trò chuyện: form bên trái, tin nhắn bên phải */
   #tab-comments .page { grid-template-columns: 380px 1fr; align-items: start; }
