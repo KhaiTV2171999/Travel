@@ -119,16 +119,11 @@ main { max-width: 640px; margin: 0 auto; }
 .subtabs + .page { padding-top: 8px; }
 
 /* ============ Info ============ */
-/* intro đứng một mình thì không cần khoảng cách dưới */
-.intro:last-child { margin-bottom: 0; }
 .info-rows { list-style: none; margin: 0; padding: 0; }
 .info-rows li { display: grid; grid-template-columns: 26px 96px 1fr; gap: 8px; padding: 10px 0; border-top: 1px dashed var(--line); }
 .info-rows li:first-child { border-top: 0; padding-top: 0; }
 .info-rows .lbl { color: var(--muted); font-size: 14px; }
 .info-rows .val { font-weight: 600; word-break: break-word; }
-.intro { position: relative; margin: 0 0 14px; padding: 14px 16px 14px 44px; border-radius: 18px; white-space: pre-line;
-         background: var(--surface-2); font-style: italic; }
-.intro::before { content: "💬"; position: absolute; left: 14px; top: 13px; font-style: normal; }
 .notice { margin: 0; background: var(--warn-soft); border-radius: 16px; padding: 12px 14px; font-weight: 600; }
 
 /* ============ Gallery ============ */
@@ -411,8 +406,6 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 18px; min-width
   .card { padding: 24px; }
 
   /* Tổng quan: giới thiệu bên trái, thông tin bên phải */
-  #sec-info:has(.intro):has(.info-rows) { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
-  #sec-info .intro { margin: 0; }
   .gallery { grid-template-columns: repeat(5, 1fr); gap: 10px; }
 
   /* Điểm đến: 2 cột */

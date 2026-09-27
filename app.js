@@ -130,13 +130,11 @@ function renderTrip() {
     ['📞', 'Liên hệ', contact],
   ].filter(r => r[2]);
 
-  $('#sec-info').hidden = !rows.length && !info.gioi_thieu;
-  $('#sec-info').innerHTML =
-    (info.gioi_thieu ? `<p class="intro">${esc(info.gioi_thieu)}</p>` : '') +
-    (rows.length
-      ? `<ul class="info-rows">${rows.map(r =>
-          `<li><span class="ico">${r[0]}</span><span class="lbl">${r[1]}</span><span class="val">${r[2]}</span></li>`).join('')}</ul>`
-      : '');
+  $('#sec-info').hidden = !rows.length;
+  $('#sec-info').innerHTML = rows.length
+    ? `<ul class="info-rows">${rows.map(r =>
+        `<li><span class="ico">${r[0]}</span><span class="lbl">${r[1]}</span><span class="val">${r[2]}</span></li>`).join('')}</ul>`
+    : '';
 
   $('#sec-gallery').hidden = !gallery.length;
   // Lưới ảnh nhỏ: tải bản thu nhỏ 400px, bấm vào mới mở ảnh lớn
