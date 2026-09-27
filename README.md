@@ -69,6 +69,8 @@ Tên sheet và tên cột không phân biệt hoa/thường hay có dấu/không
 | Phí người lớn / Phí trẻ em | 2500000. Dùng để tính tổng tiền tạm thu theo số người đăng ký |
 
 ### `Guide`: Tiêu đề | Nội dung | Ảnh
+### `Ăn uống`: Tên | Mô tả | Địa chỉ | Ảnh
+Địa chỉ hiện thành link mở Google Maps. Sheet cũ chưa có trang này thì chạy lại hàm `setupSheets`: hàm chỉ tạo trang còn thiếu, không đụng dữ liệu đang có.
 ### `Lịch trình`: Ngày | Giờ | Hoạt động | Địa điểm | Ghi chú | Ảnh
 Chỉ cần ghi cột **Ngày** ở dòng đầu tiên của mỗi ngày. Các dòng sau để trống sẽ được tính chung vào ngày đó.
 ### `Kinh phí`: Hạng mục | Số tiền | Ghi chú

@@ -47,6 +47,15 @@ const SCHEMA = {
       ['Chợ đêm Đà Lạt', 'Ăn bánh tráng nướng, sữa đậu nành nóng, mua đặc sản mứt và atiso.', ''],
     ],
   },
+  food: {
+    name: 'Ăn uống',
+    headers: ['Tên', 'Mô tả', 'Địa chỉ', 'Ảnh'],
+    sample: [
+      ['Bánh căn Nhà Chung', 'Bánh căn nóng giòn chấm nước mắm xíu mại, ăn sáng rất hợp.', '1 Nhà Chung, Phường 3, Đà Lạt', ''],
+      ['Lẩu gà lá é Tao Ngộ', 'Lẩu gà nấu lá é thơm, hợp trời lạnh buổi tối.', '5 Bà Triệu, Phường 3, Đà Lạt', ''],
+      ['Kem bơ Thanh Thảo', 'Kem bơ dẻo béo, món tráng miệng nổi tiếng.', '76 Nguyễn Văn Trỗi, Phường 2, Đà Lạt', ''],
+    ],
+  },
   schedule: {
     name: 'Lịch trình',
     headers: ['Ngày', 'Giờ', 'Hoạt động', 'Địa điểm', 'Ghi chú', 'Ảnh'],
@@ -148,6 +157,9 @@ function readTrip_() {
     guide: rows_(SCHEMA.guide.name)
       .map(r => ({ title: r.tieu_de || '', content: r.noi_dung || '', image: imageUrl_(r.anh) }))
       .filter(g => g.title || g.content),
+    food: rows_(SCHEMA.food.name)
+      .map(r => ({ title: r.ten || '', content: r.mo_ta || '', address: r.dia_chi || '', image: imageUrl_(r.anh) }))
+      .filter(f => f.title),
     schedule: schedule,
     budget: rows_(SCHEMA.budget.name)
       .map(r => ({ item: r.hang_muc || '', amount: money_(r.so_tien), note: r.ghi_chu || '' }))

@@ -142,6 +142,7 @@ main { max-width: 640px; margin: 0 auto; }
             background: linear-gradient(135deg, color-mix(in srgb, var(--c) 45%, #fff), color-mix(in srgb, var(--c) 80%, #fff)); }
 .guide-body { padding: 10px 14px; }
 .guide h3 { font-size: 18px; font-weight: 800; margin-bottom: 2px; }
+.guide .addr { display: inline-block; font-size: 14px; font-weight: 600; margin-bottom: 2px; text-decoration: none; }
 .guide p { margin: 0; white-space: pre-line; color: var(--muted); font-size: 15px; }
 .clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .link-btn { background: none; border: 0; padding: 6px 0 0; color: var(--c, var(--coral)); font: inherit; font-weight: 700; cursor: pointer; }

@@ -96,13 +96,36 @@ document.addEventListener('visibilitychange', () => {
 
 /* ---------- 1. Giới thiệu chuyến đi ---------- */
 const COLORS = ['#ff6b4a', '#14b8a6', '#a855f7', '#ffb020', '#3b82f6', '#ec4899'];
-const PLACE_EMOJI = ['🏞️', '🌊', '⛰️', '🏖️', '🌸', '🏯', '🌅', '🍜'];
+const PLACE_EMOJI = ['🏞️', '🌊', '⛰️', '🏖️', '🌸', '🏯', '🌅'];
+const FOOD_EMOJI = ['🍜', '🍲', '🥖', '🍢', '🦐', '🍚', '☕', '🍧'];
 const WAVES = `<svg class="waves" viewBox="0 0 1440 100" preserveAspectRatio="none" aria-hidden="true">
   <path class="back" fill="currentColor" d="M0,40 C200,90 440,10 720,50 C1000,90 1240,20 1440,45 L1440,100 L0,100 Z"/>
   <path fill="currentColor" d="M0,60 C240,100 480,20 720,55 C960,90 1200,35 1440,62 L1440,100 L0,100 Z"/></svg>`;
 
+// Thẻ dùng chung cho Điểm đến và Ăn uống: ảnh (hoặc emoji) bên trái, chữ bên phải
+function cards(items, emojis, colorOffset) {
+  return items.map((g, i) => {
+    const long = g.content.length > 110;
+    const maps = g.address
+      ? `<a class="addr" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(g.address)}" target="_blank" rel="noopener">📍 ${esc(g.address)}</a>`
+      : '';
+    return `<article class="guide" style="--c:${COLORS[(i + colorOffset) % COLORS.length]}">
+      ${g.image
+        ? `<img src="${esc(g.image)}" alt="${esc(g.title)}" loading="lazy" referrerpolicy="no-referrer" data-zoom="${esc(g.image)}">`
+        : `<div class="guide-ph">${emojis[i % emojis.length]}</div>`}
+      <div class="guide-body">
+        <h3>${esc(g.title)}</h3>
+        ${maps}
+        <p class="${long ? 'clamp' : ''}">${esc(g.content)}</p>
+        ${long ? '<button type="button" class="link-btn" data-more>Xem thêm</button>' : ''}
+      </div>
+    </article>`;
+  }).join('');
+}
+
 function renderTrip() {
   const { info, gallery, guide, schedule } = state.data;
+  const food = state.data.food || []; // backend cũ chưa có mục Ăn uống
   const title = info.ten_chuyen_di || 'Chuyến du lịch';
   document.title = title;
   $('#navBrand').textContent = '✈️ ' + title;
@@ -143,22 +166,10 @@ function renderTrip() {
        <img src="${esc(g.url.replace(/sz=w\d+/, 'sz=w400'))}" alt="${esc(g.name)}" loading="lazy" referrerpolicy="no-referrer">
      </button>`).join('');
 
-  $('#guideList').innerHTML = guide.length
-    ? guide.map((g, i) => {
-        const long = g.content.length > 110;
-        return `<article class="guide" style="--c:${COLORS[i % COLORS.length]}">
-          ${g.image
-            ? `<img src="${esc(g.image)}" alt="${esc(g.title)}" loading="lazy" referrerpolicy="no-referrer" data-zoom="${esc(g.image)}">`
-            : `<div class="guide-ph">${PLACE_EMOJI[i % PLACE_EMOJI.length]}</div>`}
-          <div class="guide-body">
-            <h3>${esc(g.title)}</h3>
-            <p class="${long ? 'clamp' : ''}">${esc(g.content)}</p>
-            ${long ? '<button type="button" class="link-btn" data-more>Xem thêm</button>' : ''}
-          </div>
-        </article>`;
-      }).join('')
-    : '';
+  $('#guideList').innerHTML = cards(guide, PLACE_EMOJI, 0);
   $('#sec-guide').hidden = !guide.length;
+  $('#foodList').innerHTML = cards(food, FOOD_EMOJI, 3);
+  $('#sec-food').hidden = !food.length;
 
   const days = [];
   schedule.forEach(s => {
