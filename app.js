@@ -216,7 +216,7 @@ function renderCrowd() {
   $('#crowd').hidden = !members.length;
   $('#crowd').innerHTML = members.length
     ? `<div class="faces">${members.slice(-5).map(m => avatar(m.name, 'sm')).join('')}</div>
-       <span><b>${people} người</b> đã sẵn sàng lên đường</span>`
+       <span><b>${people} người</b> đã sẵn sàng lên đường</span><span class="crowd-go" aria-hidden="true">›</span>`
     : '';
 }
 
