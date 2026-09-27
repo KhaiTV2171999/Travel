@@ -62,7 +62,7 @@ h1, h2, h3 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
 a { color: var(--coral); font-weight: 600; }
 
 main { max-width: 640px; margin: 0 auto; }
-.page { padding: 16px; display: grid; gap: 22px; }
+.page { padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
 .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 18px; }
 .muted { color: var(--muted); }
 .small { font-size: 13px; }
@@ -132,14 +132,10 @@ main { max-width: 640px; margin: 0 auto; }
 .notice { margin: 0; background: var(--warn-soft); border-radius: 16px; padding: 12px 14px; font-weight: 600; }
 
 /* ============ Gallery ============ */
-.gallery { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -16px; padding: 4px 16px 10px;
-                        scrollbar-width: none; }
-.gallery::-webkit-scrollbar { display: none; }
-.gallery button { flex: none; width: 70%; max-width: 300px; aspect-ratio: 4 / 5; padding: 0; border: 0; border-radius: 20px;
-                  overflow: hidden; scroll-snap-align: start; background: var(--surface-2); cursor: zoom-in; box-shadow: var(--shadow-sm); }
-.gallery button:nth-child(odd) { transform: rotate(-1.5deg); }
-.gallery button:nth-child(even) { transform: rotate(1.5deg); }
-.gallery img { width: 100%; height: 100%; object-fit: cover; }
+.gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.gallery button { aspect-ratio: 1; padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: var(--surface-2); cursor: zoom-in; }
+.gallery img { width: 100%; height: 100%; object-fit: cover; transition: transform .2s; }
+.gallery button:hover img { transform: scale(1.05); }
 
 /* ============ Guide ============ */
 .guide-list { display: grid; gap: 12px; }
@@ -417,8 +413,7 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 18px; min-width
   /* Tổng quan: giới thiệu bên trái, thông tin bên phải */
   #sec-info:has(.intro):has(.info-rows) { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
   #sec-info .intro { margin: 0; }
-  .gallery { margin: 0; padding: 4px 0 10px; }
-  .gallery button { width: 260px; }
+  .gallery { grid-template-columns: repeat(5, 1fr); gap: 10px; }
 
   /* Điểm đến: 2 cột */
   .guide-list { grid-template-columns: 1fr 1fr; gap: 16px; }

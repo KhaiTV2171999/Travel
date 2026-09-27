@@ -142,9 +142,10 @@ function renderTrip() {
       : '');
 
   $('#sec-gallery').hidden = !gallery.length;
+  // Lưới ảnh nhỏ: tải bản thu nhỏ 400px, bấm vào mới mở ảnh lớn
   $('#gallery').innerHTML = gallery.map(g =>
     `<button type="button" data-zoom="${esc(g.url)}" aria-label="Xem ảnh ${esc(g.name)}">
-       <img src="${esc(g.url)}" alt="${esc(g.name)}" loading="lazy" referrerpolicy="no-referrer">
+       <img src="${esc(g.url.replace(/sz=w\d+/, 'sz=w400'))}" alt="${esc(g.name)}" loading="lazy" referrerpolicy="no-referrer">
      </button>`).join('');
 
   $('#guideList').innerHTML = guide.length
