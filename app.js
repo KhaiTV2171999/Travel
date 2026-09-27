@@ -180,20 +180,30 @@ function renderTrip() {
     d.items.push(s);
   });
   $('#scheduleList').innerHTML = days.length
-    ? days.map((d, i) => `<div class="day" style="--c:${COLORS[i % COLORS.length]}">
-        <h3 class="day-head"><span class="num">${i + 1}</span>${esc(d.day || 'Ngày ' + (i + 1))}</h3>
-        <ol class="timeline">
-          ${d.items.map(s => `<li>
-            <time>${esc(s.time)}</time>
-            <div class="tl-body">
+    ? days.map((d, i) => {
+        // "Ngày 1 (17/10)" -> tiêu đề "Ngày 1" + nhãn ngày "17/10"
+        const m = String(d.day || '').match(/^(.*?)\s*\((.+)\)\s*$/);
+        const title = m ? m[1] : d.day || 'Ngày ' + (i + 1);
+        const date = m ? m[2] : '';
+        return `<article class="day" style="--c:${COLORS[i % COLORS.length]}">
+          <header class="day-head">
+            <h3>${esc(title)}</h3>
+            ${date ? `<span class="day-date">${esc(date)}</span>` : ''}
+            <span class="day-count">${d.items.length} hoạt động</span>
+          </header>
+          <ol class="timeline">
+            ${d.items.map(s => `<li>
+              ${s.time ? `<time>${esc(s.time)}</time>` : ''}
               <b>${esc(s.activity || s.place)}</b>
-              ${s.activity && s.place ? `<p class="muted">📍 ${esc(s.place)}</p>` : ''}
-              ${s.note ? `<p>💡 ${esc(s.note)}</p>` : ''}
+              ${(s.activity && s.place) || s.note ? `<div class="tl-meta">
+                ${s.activity && s.place ? `<span>📍 ${esc(s.place)}</span>` : ''}
+                ${s.note ? `<span>💡 ${esc(s.note)}</span>` : ''}
+              </div>` : ''}
               ${s.image ? `<img src="${esc(s.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-zoom="${esc(s.image)}">` : ''}
-            </div>
-          </li>`).join('')}
-        </ol>
-      </div>`).join('')
+            </li>`).join('')}
+          </ol>
+        </article>`;
+      }).join('')
     : '';
   $('#sec-schedule').hidden = !days.length;
 

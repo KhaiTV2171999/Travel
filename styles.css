@@ -151,23 +151,28 @@ main { max-width: 640px; margin: 0 auto; }
 .clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .link-btn { background: none; border: 0; padding: 6px 0 0; color: var(--c, var(--coral)); font: inherit; font-weight: 700; cursor: pointer; }
 
-/* ============ Timeline ============ */
-.day + .day { margin-top: 22px; }
-.day-head { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; color: #fff;
-            background: var(--c); padding: 6px 14px 6px 6px; border-radius: 999px; margin-bottom: 14px;
-            box-shadow: 0 6px 14px -6px var(--c); }
-.day-head .num { width: 26px; height: 26px; border-radius: 50%; background: rgba(255, 255, 255, .3); display: grid; place-items: center; font-size: 14px; }
-.timeline { list-style: none; margin: 0; padding: 0; }
-.timeline li { display: grid; grid-template-columns: 58px 1fr; gap: 14px; position: relative; padding-bottom: 16px; }
-.timeline li::before { content: ""; position: absolute; left: 70px; top: 10px; bottom: -4px; border-left: 2px dashed color-mix(in srgb, var(--c) 45%, transparent); }
+/* ============ Lịch trình ============ */
+#scheduleList { display: grid; gap: 16px; }
+.day { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
+.day-head { display: flex; align-items: center; gap: 10px; padding: 14px 18px;
+            background: linear-gradient(135deg, color-mix(in srgb, var(--c) 18%, var(--surface)), var(--surface));
+            border-bottom: 1px solid color-mix(in srgb, var(--c) 20%, transparent); }
+.day-head h3 { font-size: 22px; font-weight: 800; color: var(--c); }
+.day-date { background: var(--c); color: #fff; font-weight: 700; font-size: 14px; padding: 3px 10px; border-radius: 999px; }
+.day-count { margin-left: auto; font-size: 13px; color: var(--muted); }
+
+.timeline { list-style: none; margin: 0; padding: 16px 18px 6px; }
+.timeline li { position: relative; padding: 0 0 18px 28px; }
+.timeline li::before { content: ""; position: absolute; left: 6px; top: 16px; bottom: -2px;
+                       border-left: 2px dashed color-mix(in srgb, var(--c) 40%, transparent); }
 .timeline li:last-child::before { display: none; }
-.timeline time { font-weight: 800; font-size: 14px; color: var(--c); font-variant-numeric: tabular-nums; text-align: right; padding-top: 1px; }
-.tl-body { position: relative; padding-left: 16px; }
-.tl-body::before { content: ""; position: absolute; left: -8px; top: 5px; width: 12px; height: 12px; border-radius: 50%;
-                   background: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 22%, var(--surface)); }
-.tl-body b { display: block; font-size: 15.5px; }
-.tl-body p { margin: 2px 0 0; font-size: 14px; }
-.tl-body img { margin-top: 10px; border-radius: 14px; aspect-ratio: 16 / 9; object-fit: cover; width: 100%; cursor: zoom-in; }
+.timeline li::after { content: ""; position: absolute; left: 0; top: 3px; width: 14px; height: 14px; border-radius: 50%;
+                      background: var(--surface); border: 3px solid var(--c); box-sizing: border-box; }
+.timeline time { display: block; font-size: 13.5px; font-weight: 800; color: var(--c); letter-spacing: .02em; line-height: 1.4; }
+.timeline b { display: block; font-size: 16.5px; line-height: 1.35; }
+.tl-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tl-meta span { font-size: 13.5px; background: var(--surface-2); color: var(--muted); padding: 3px 10px; border-radius: 10px; }
+.timeline img { margin-top: 10px; border-radius: 14px; aspect-ratio: 16 / 9; object-fit: cover; width: 100%; cursor: zoom-in; }
 
 /* ============ Budget ============ */
 .bar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; gap: 3px; margin-bottom: 8px; }
@@ -421,8 +426,7 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 18px; min-width
   .guide-body { padding: 16px 18px; }
 
   /* Lịch trình: các ngày xếp cạnh nhau */
-  #scheduleList { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 28px; }
-  .day + .day { margin-top: 0; }
+  #scheduleList { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: start; }
 
   /* Kinh phí: danh sách bên trái, phí/người bên phải */
   #budgetBox:has(.budget-main):has(.budget-side) { display: grid; grid-template-columns: 1.5fr 1fr; gap: 32px; align-items: start; }
