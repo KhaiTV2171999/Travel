@@ -60,6 +60,8 @@ function refresh(kind, btn) {
   if (btn) btn.classList.add('spinning');
   call(fn)
     .then(v => {
+      // Không vẽ lại nếu không có gì mới (tránh giật khi tự tải tin mỗi 15 giây)
+      if (JSON.stringify(v) === JSON.stringify(state.data[kind])) return;
       state.data[kind] = v;
       kind === 'members' ? renderMembers() : renderComments();
     })
@@ -77,6 +79,13 @@ function showTab(tab, skipRefresh) {
   if (ready && !skipRefresh) {
     if (tab === 'list') refresh('members');
     if (tab === 'comments') refresh('comments');
+  }
+  // Tab trò chuyện: cuộn xuống tin mới nhất và tự tải tin mới mỗi 15 giây
+  clearInterval(chat.timer);
+  if (ready && tab === 'comments') {
+    chat.stick = true;
+    renderComments();
+    chat.timer = setInterval(() => { if (!document.hidden) refresh('comments'); }, 15000);
   }
 }
 
@@ -270,11 +279,7 @@ function renderRegisterState() {
   const closed = !!state.data.closed;
   $('#regClosed').hidden = !closed;
   $('#regFields').disabled = closed;
-  const saved = store.get('travel_name');
-  if (saved) {
-    const f = $('#commentForm').elements.namedItem('name');
-    if (!f.value) f.value = saved;
-  }
+  renderComposer();
 }
 
 $('#familyToggle').addEventListener('change', e => {
@@ -397,52 +402,128 @@ function renderMembers() {
 
 $('#memberSearch').addEventListener('input', renderMembers);
 
-/* ---------- 4. Bình luận ---------- */
-function renderComments() {
-  const list = state.data.comments;
-  const me = norm(store.get('travel_name'));
-  $('#commentList').innerHTML = list.length
-    ? list.map(c => `<li class="comment ${me && norm(c.name) === me ? 'me' : ''}">
-        ${avatar(c.name)}
-        <div class="bubble">
-          <div class="top"><b>${esc(c.name)}</b><span class="muted small">${esc(c.time)}</span></div>
-          <p>${esc(c.content)}</p>
-        </div>
-      </li>`).join('')
-    : '<li class="card empty">🦗 Im ắng quá… mở hàng đi nè!</li>';
+/* ---------- 4. Trò chuyện ---------- */
+const chat = { pending: [], timer: null, stick: false };
+
+// "27/09/2026 10:12:33" -> { day: '27/09/2026', time: '10:12' }
+function splitTime(s) {
+  const str = String(s || '');
+  const t = str.match(/(\d{1,2}):(\d{2})/);
+  return { day: str.split(/[ ,T]+/)[0] || '', time: t ? t[1].padStart(2, '0') + ':' + t[2] : '' };
 }
+
+// Đã có tên thì ẩn ô nhập tên, chỉ hiện "Đang nhắn với tên …"
+function renderComposer() {
+  const name = store.get('travel_name');
+  $('#nameRow').hidden = !!name;
+  $('#meRow').hidden = !name;
+  $('#meName').textContent = name;
+  if (name) $('#commentForm').elements.namedItem('name').value = name;
+}
+
+function renderComments() {
+  const box = $('#commentList');
+  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  const { info, members } = state.data;
+  const me = norm(store.get('travel_name'));
+  // API trả tin mới nhất trước -> đảo lại cho tin cũ ở trên, tin mới ở dưới
+  const list = state.data.comments.slice().reverse().concat(chat.pending);
+
+  $('#chatTitle').textContent = info.ten_chuyen_di || 'Trò chuyện';
+  $('#chatSub').textContent = members.length
+    ? `${memberStats(members).people} thành viên · ${list.length} tin nhắn`
+    : 'Hỏi đáp, rủ rê, chia sẻ';
+  $('#chatFaces').innerHTML = members.slice(-3).map(m => avatar(m.name, 'sm')).join('');
+
+  // Gom các tin liên tiếp của cùng một người trong cùng một ngày
+  const sameGroup = (a, b) => a && b && norm(a.name) === norm(b.name) && splitTime(a.time).day === splitTime(b.time).day;
+  let html = '';
+  let lastDay = '';
+  list.forEach((c, i) => {
+    const t = splitTime(c.time);
+    if (t.day && t.day !== lastDay) {
+      html += `<li class="chat-sep"><span>${esc(t.day)}</span></li>`;
+      lastDay = t.day;
+    }
+    const first = !sameGroup(list[i - 1], c);
+    const last = !sameGroup(c, list[i + 1]);
+    const mine = me && norm(c.name) === me;
+    html += `<li class="msg ${mine ? 'me' : ''} ${first ? 'first' : ''} ${last ? 'last' : ''} ${c.pending ? 'pending' : ''}">
+      ${mine ? '' : last ? avatar(c.name, 'sm') : '<span class="avatar-gap"></span>'}
+      <div class="msg-body">
+        ${first && !mine ? `<div class="msg-name">${esc(c.name)}</div>` : ''}
+        <div class="bubble">${esc(c.content)}</div>
+        ${last ? `<div class="msg-time">${c.pending ? 'Đang gửi…' : esc(t.time)}</div>` : ''}
+      </div>
+    </li>`;
+  });
+  box.innerHTML = html || '<li class="chat-empty">🦗 Im ắng quá… mở hàng đi nè!</li>';
+  if (nearBottom || chat.stick) {
+    box.scrollTop = box.scrollHeight;
+    chat.stick = false;
+  }
+}
+
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+const composerText = $('#commentForm').elements.namedItem('content');
+composerText.addEventListener('input', () => autoGrow(composerText));
+// Máy tính: Enter để gửi, Shift+Enter xuống dòng. Bỏ qua khi bộ gõ tiếng Việt đang ghép chữ.
+composerText.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && matchMedia('(pointer: fine)').matches) {
+    e.preventDefault();
+    const form = $('#commentForm');
+    form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true }));
+  }
+});
+
+$('#changeName').addEventListener('click', () => {
+  store.set('travel_name', '');
+  const input = $('#commentForm').elements.namedItem('name');
+  input.value = '';
+  renderComposer();
+  input.focus();
+});
 
 $('#commentForm').addEventListener('submit', e => {
   e.preventDefault();
   const form = e.target;
-  const name = form.elements.namedItem('name');
-  const content = form.elements.namedItem('content');
+  const nameInput = form.elements.namedItem('name');
   const errBox = $('#commentError');
-  const data = { name: name.value.trim(), content: content.value.trim() };
-  if (!data.name || !data.content) {
-    errBox.textContent = !data.name ? 'Vui lòng nhập tên' : 'Vui lòng nhập nội dung';
+  const data = { name: (store.get('travel_name') || nameInput.value).trim(), content: composerText.value.trim() };
+  if (!data.name) {
+    errBox.textContent = 'Nhập tên của bạn trước nhé';
     errBox.hidden = false;
+    nameInput.focus();
     return;
   }
+  if (!data.content) return;
   errBox.hidden = true;
-  const btn = form.querySelector('[type=submit]');
-  btn.disabled = true;
-  btn.textContent = 'Đang gửi…';
+  store.set('travel_name', data.name);
+  renderComposer();
+
+  // Hiện tin ngay (mờ) trong lúc chờ server lưu
+  const msg = { name: data.name, content: data.content, time: '', pending: true };
+  chat.pending.push(msg);
+  composerText.value = '';
+  autoGrow(composerText);
+  chat.stick = true;
+  renderComments();
+
   call('addComment', data)
-    .then(comments => {
-      state.data.comments = comments;
-      store.set('travel_name', data.name);
-      content.value = '';
-      renderComments();
-      toast('💬 Đã gửi!');
-    })
+    .then(comments => { state.data.comments = comments; })
     .catch(err => {
-      errBox.textContent = err.message;
+      errBox.textContent = 'Gửi không được: ' + err.message;
       errBox.hidden = false;
+      if (!composerText.value) composerText.value = data.content;
     })
     .finally(() => {
-      btn.disabled = false;
-      btn.textContent = 'Gửi 🚀';
+      chat.pending = chat.pending.filter(m => m !== msg);
+      chat.stick = true;
+      renderComments();
     });
 });
 
