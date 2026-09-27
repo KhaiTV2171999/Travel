@@ -126,13 +126,7 @@ function renderTrip() {
   const contact = phone
     ? esc(info.lien_he).replace(esc(phone[1]), `<a href="tel:${esc(phone[1].replace(/[ .]/g, ''))}">${esc(phone[1])}</a>`)
     : esc(info.lien_he);
-  // Giờ tập trung ở dòng trên, địa điểm ở dòng dưới
-  const meet = [
-    info.gio_tap_trung ? `<span class="meet-time">${esc(info.gio_tap_trung)}</span>` : '',
-    info.diem_tap_trung ? `<span class="meet-place">${esc(info.diem_tap_trung)}</span>` : '',
-  ].filter(Boolean).join('');
   const rows = [
-    ['🚩', 'Tập trung', meet],
     ['📝', 'Hạn đăng ký', esc(info.han_dang_ky)],
     ['📞', 'Liên hệ', contact],
   ].filter(r => r[2]);

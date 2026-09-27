@@ -126,8 +126,6 @@ main { max-width: 640px; margin: 0 auto; }
 .info-rows li:first-child { border-top: 0; padding-top: 0; }
 .info-rows .lbl { color: var(--muted); font-size: 14px; }
 .info-rows .val { font-weight: 600; word-break: break-word; }
-.meet-time, .meet-place { display: block; }
-.meet-place { font-weight: 400; }
 .intro { position: relative; margin: 0 0 14px; padding: 14px 16px 14px 44px; border-radius: 18px; white-space: pre-line;
          background: var(--surface-2); font-style: italic; }
 .intro::before { content: "💬"; position: absolute; left: 14px; top: 13px; font-style: normal; }
