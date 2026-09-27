@@ -201,7 +201,6 @@ function renderTrip() {
 /* Tab con trong "Chuyến đi": mỗi lần chỉ hiện 1 mục để khỏi cuộn dài */
 const SUBTABS = [
   ['overview', 'Tổng quan'],
-  ['guide', 'Điểm đến'],
   ['schedule', 'Lịch trình'],
   ['budget', 'Kinh phí'],
 ];
