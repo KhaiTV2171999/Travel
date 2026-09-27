@@ -1,3 +1,4 @@
 # File tạm của Excel khi đang mở file
 ~$*
 .vercel
+*.tmp.html
