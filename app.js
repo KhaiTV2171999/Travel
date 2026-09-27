@@ -72,7 +72,7 @@ function showTab(tab, skipRefresh) {
   state.tab = tab;
   const ready = !!state.data;
   $$('.tab').forEach(s => { s.hidden = !ready || s.id !== 'tab-' + tab; });
-  $$('.bottom-nav button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
+  $$('.bottom-nav button:not(.nav-brand)').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
   window.scrollTo(0, 0);
   if (ready && !skipRefresh) {
     if (tab === 'list') refresh('members');
@@ -91,6 +91,7 @@ function renderTrip() {
   const { info, gallery, guide, schedule } = state.data;
   const title = info.ten_chuyen_di || 'Chuyến du lịch';
   document.title = title;
+  $('#navBrand').textContent = '✈️ ' + title;
 
   const dates = [info.ngay_di, info.ngay_ve].filter(Boolean).join(' → ');
   const hero = $('#hero');
@@ -234,29 +235,32 @@ function renderBudget() {
   const estimate = st.adults * feeAdult + st.children * feeChild;
   const color = i => COLORS[i % COLORS.length];
 
-  let html = '';
+  // Chia 2 khối: danh sách khoản chi và phí mỗi người (desktop hiện thành 2 cột)
+  let list = '';
   if (budget.length) {
     if (total > 0) {
-      html += `<div class="bar" aria-hidden="true">${budget.map((b, i) =>
+      list += `<div class="bar" aria-hidden="true">${budget.map((b, i) =>
         `<span style="width:${Math.max(0, b.amount) / total * 100}%;background:${color(i)}"></span>`).join('')}</div>`;
     }
-    html += budget.map((b, i) => `<div class="budget-row">
+    list += budget.map((b, i) => `<div class="budget-row">
         <span class="dot" style="background:${color(i)}"></span>
         <div class="name">${esc(b.item)}${b.note ? `<div class="muted small">${esc(b.note)}</div>` : ''}</div>
         <div class="amt">${money(b.amount)}</div>
       </div>`).join('');
-    html += `<div class="budget-total"><span>Tổng chi phí</span><span class="amt">${money(total)}</span></div>`;
+    list += `<div class="budget-total"><span>Tổng chi phí</span><span class="amt">${money(total)}</span></div>`;
   }
+  let side = '';
   if (feeAdult || feeChild) {
-    html += `<div class="fees">
+    side += `<div class="fees">
       <div class="fee adult"><div class="lbl">🧑 Người lớn</div><div class="val">${money(feeAdult)}</div><div class="lbl">mỗi người</div></div>
       <div class="fee child"><div class="lbl">🧒 Trẻ em</div><div class="val">${money(feeChild)}</div><div class="lbl">mỗi người</div></div>
     </div>`;
     if (st.count) {
-      html += `<p class="estimate">🧮 Tạm thu theo <b>${st.people}</b> người đã đăng ký
+      side += `<p class="estimate">🧮 Tạm thu theo <b>${st.people}</b> người đã đăng ký
         (${st.adults} người lớn, ${st.children} trẻ em): <b>${money(estimate)}</b></p>`;
     }
   }
+  const html = (list ? `<div class="budget-main">${list}</div>` : '') + (side ? `<div class="budget-side">${side}</div>` : '');
   $('#budgetBox').innerHTML = html;
   $('#sec-budget').hidden = !html;
 }

@@ -321,3 +321,77 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 18px; min-width
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .confetti { display: none; }
 }
+
+/* ============ Desktop (từ 900px) ============ */
+.nav-brand { display: none; }
+
+@media (min-width: 900px) {
+  body { padding-bottom: 40px; padding-top: 72px; font-size: 17px; }
+  main { max-width: 1100px; padding: 0 24px; }
+
+  /* Thanh điều hướng lên trên cùng */
+  .bottom-nav { top: 0; bottom: auto; left: 0; right: 0; max-width: none; height: 64px; border-radius: 0;
+                display: flex; align-items: center; justify-content: flex-end; gap: 4px;
+                padding: 0 max(24px, calc((100vw - 1100px) / 2 + 24px));
+                box-shadow: 0 1px 0 var(--line), 0 6px 20px -12px rgba(43, 33, 64, .25); }
+  .bottom-nav button { display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px 0 6px;
+                       border-radius: 999px; font-size: 15px; }
+  .bottom-nav button:not(.nav-brand):hover { background: var(--surface-2); color: var(--text); }
+  .nav-brand { display: block; margin-right: auto; padding: 0 !important; font-family: var(--font-display);
+               font-size: 21px !important; font-weight: 800; color: var(--text) !important;
+               max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toast { bottom: 28px; }
+
+  /* Ảnh bìa & phần đầu các tab */
+  .hero, .page-hero { margin-top: 20px; border-radius: 28px; }
+  .hero-body { padding: 44px 44px 72px; }
+  .hero h1 { font-size: 46px; }
+  .hero:not(.has-img) h1 { padding-right: 140px; }
+  .sun { top: 28px; right: 44px; width: 88px; height: 88px; }
+  .page-hero { padding: 36px 44px 64px; }
+  .page-hero h1 { font-size: 38px; }
+  .page-hero .deco, .page-hero:has(.icon-btn) .deco { font-size: 72px; right: 44px; bottom: 30px; }
+  .page-hero:has(.icon-btn) .deco { right: 110px; }
+  .page-hero .icon-btn { width: 48px; height: 48px; }
+
+  .crowd { margin: -28px 0 0 44px; width: fit-content; }
+  .subtabs { padding: 18px 0 10px; gap: 8px; }
+  .subtabs button { flex: none; padding: 10px 22px; font-size: 16px; }
+  .page { padding: 16px 0 24px; gap: 24px; }
+  .page-hero + .page { margin-top: -24px; }
+  .card { padding: 24px; }
+
+  /* Tổng quan: giới thiệu bên trái, thông tin bên phải */
+  #sec-info:has(.intro):has(.info-rows) { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+  #sec-info .intro { margin: 0; }
+  .gallery { margin: 0; padding: 4px 0 10px; }
+  .gallery button { width: 260px; }
+
+  /* Điểm đến: 2 cột */
+  .guide-list { grid-template-columns: 1fr 1fr; gap: 16px; }
+  .guide { grid-template-columns: 150px 1fr; }
+  .guide img, .guide-ph { width: 150px; min-height: 130px; }
+  .guide-body { padding: 16px 18px; }
+
+  /* Lịch trình: các ngày xếp cạnh nhau */
+  #scheduleList { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 28px; }
+  .day + .day { margin-top: 0; }
+
+  /* Kinh phí: danh sách bên trái, phí/người bên phải */
+  #budgetBox:has(.budget-main):has(.budget-side) { display: grid; grid-template-columns: 1.5fr 1fr; gap: 32px; align-items: start; }
+  .budget-side .fees { margin-top: 0; grid-template-columns: 1fr; }
+
+  /* Đăng ký: form ở giữa */
+  #regForm, #regClosed { width: 100%; max-width: 640px; margin: 0 auto; }
+
+  /* Danh sách: lưới */
+  #tab-list .page { grid-template-columns: 1fr 360px; }
+  #memberStats { grid-column: 1; }
+  #tab-list .search { grid-column: 2; grid-row: 1; align-self: center; }
+  .member-list { grid-column: 1 / -1; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+
+  /* Trò chuyện: form bên trái, tin nhắn bên phải */
+  #tab-comments .page { grid-template-columns: 380px 1fr; align-items: start; }
+  #commentForm { position: sticky; top: 90px; }
+  .bubble { max-width: 70%; }
+}
