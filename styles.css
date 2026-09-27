@@ -119,6 +119,10 @@ main { max-width: 640px; margin: 0 auto; }
 .subtabs + .page { padding-top: 8px; }
 
 /* ============ Info ============ */
+.intro { position: relative; margin: 0 0 14px; padding: 14px 16px 14px 44px; border-radius: 18px; white-space: pre-line;
+         background: var(--surface-2); font-style: italic; }
+.intro::before { content: "💬"; position: absolute; left: 14px; top: 13px; font-style: normal; }
+.intro:last-child { margin-bottom: 0; }
 .info-rows { list-style: none; margin: 0; padding: 0; }
 .info-rows li { display: grid; grid-template-columns: 26px 96px 1fr; gap: 8px; padding: 10px 0; border-top: 1px dashed var(--line); }
 .info-rows li:first-child { border-top: 0; padding-top: 0; }
