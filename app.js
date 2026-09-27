@@ -127,7 +127,6 @@ function renderTrip() {
     ? esc(info.lien_he).replace(esc(phone[1]), `<a href="tel:${esc(phone[1].replace(/[ .]/g, ''))}">${esc(phone[1])}</a>`)
     : esc(info.lien_he);
   const rows = [
-    ['📝', 'Hạn đăng ký', esc(info.han_dang_ky)],
     ['📞', 'Liên hệ', contact],
   ].filter(r => r[2]);
 
