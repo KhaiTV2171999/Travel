@@ -56,6 +56,13 @@ const SCHEMA = {
       ['Kem bơ Thanh Thảo', 'Kem bơ dẻo béo, món tráng miệng nổi tiếng.', '76 Nguyễn Văn Trỗi, Phường 2, Đà Lạt', ''],
     ],
   },
+  hotel: {
+    name: 'Khách sạn',
+    headers: ['Tên', 'Mô tả', 'Địa chỉ', 'Điện thoại', 'Ảnh'],
+    sample: [
+      ['Khách sạn Colline', 'Nhận phòng 14:00, trả phòng 12:00. Gần chợ Đà Lạt, có ăn sáng.', '10 Phan Bội Châu, Phường 1, Đà Lạt', "'0263 3665 777", ''],
+    ],
+  },
   schedule: {
     name: 'Lịch trình',
     headers: ['Ngày', 'Giờ', 'Hoạt động', 'Địa điểm', 'Ghi chú', 'Ảnh'],
@@ -160,6 +167,9 @@ function readTrip_() {
     food: rows_(SCHEMA.food.name)
       .map(r => ({ title: r.ten || '', content: r.mo_ta || '', address: r.dia_chi || '', image: imageUrl_(r.anh) }))
       .filter(f => f.title),
+    hotel: rows_(SCHEMA.hotel.name)
+      .map(r => ({ title: r.ten || '', content: r.mo_ta || '', address: r.dia_chi || '', phone: r.dien_thoai || '', image: imageUrl_(r.anh) }))
+      .filter(h => h.title),
     schedule: schedule,
     budget: rows_(SCHEMA.budget.name)
       .map(r => ({ item: r.hang_muc || '', amount: money_(r.so_tien), note: r.ghi_chu || '' }))

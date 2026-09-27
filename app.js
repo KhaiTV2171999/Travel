@@ -98,16 +98,20 @@ document.addEventListener('visibilitychange', () => {
 const COLORS = ['#ff6b4a', '#14b8a6', '#a855f7', '#ffb020', '#3b82f6', '#ec4899'];
 const PLACE_EMOJI = ['🏞️', '🌊', '⛰️', '🏖️', '🌸', '🏯', '🌅'];
 const FOOD_EMOJI = ['🍜', '🍲', '🥖', '🍢', '🦐', '🍚', '☕', '🍧'];
+const HOTEL_EMOJI = ['🏨', '🏡', '🛏️', '🏩'];
 const WAVES = `<svg class="waves" viewBox="0 0 1440 100" preserveAspectRatio="none" aria-hidden="true">
   <path class="back" fill="currentColor" d="M0,40 C200,90 440,10 720,50 C1000,90 1240,20 1440,45 L1440,100 L0,100 Z"/>
   <path fill="currentColor" d="M0,60 C240,100 480,20 720,55 C960,90 1200,35 1440,62 L1440,100 L0,100 Z"/></svg>`;
 
-// Thẻ dùng chung cho Điểm đến và Ăn uống: ảnh (hoặc emoji) bên trái, chữ bên phải
+// Thẻ dùng chung cho Điểm đến, Ăn uống, Khách sạn: ảnh (hoặc emoji) bên trái, chữ bên phải
 function cards(items, emojis, colorOffset) {
   return items.map((g, i) => {
     const long = g.content.length > 110;
     const maps = g.address
       ? `<a class="addr" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(g.address)}" target="_blank" rel="noopener">📍 ${esc(g.address)}</a>`
+      : '';
+    const tel = g.phone
+      ? `<a class="addr" href="tel:${esc(g.phone.replace(/[^\d+]/g, ''))}">📞 ${esc(g.phone)}</a>`
       : '';
     return `<article class="guide" style="--c:${COLORS[(i + colorOffset) % COLORS.length]}">
       ${g.image
@@ -115,7 +119,7 @@ function cards(items, emojis, colorOffset) {
         : `<div class="guide-ph">${emojis[i % emojis.length]}</div>`}
       <div class="guide-body">
         <h3>${esc(g.title)}</h3>
-        ${maps}
+        ${maps}${tel}
         <p class="${long ? 'clamp' : ''}">${esc(g.content)}</p>
         ${long ? '<button type="button" class="link-btn" data-more>Xem thêm</button>' : ''}
       </div>
@@ -125,7 +129,8 @@ function cards(items, emojis, colorOffset) {
 
 function renderTrip() {
   const { info, gallery, guide, schedule } = state.data;
-  const food = state.data.food || []; // backend cũ chưa có mục Ăn uống
+  const food = state.data.food || []; // backend cũ chưa có mục Ăn uống / Khách sạn
+  const hotel = state.data.hotel || [];
   const title = info.ten_chuyen_di || 'Chuyến du lịch';
   document.title = title;
   $('#navBrand').textContent = '✈️ ' + title;
@@ -172,6 +177,8 @@ function renderTrip() {
   $('#sec-guide').hidden = !guide.length;
   $('#foodList').innerHTML = cards(food, FOOD_EMOJI, 3);
   $('#sec-food').hidden = !food.length;
+  $('#hotelList').innerHTML = cards(hotel, HOTEL_EMOJI, 4);
+  $('#sec-hotel').hidden = !hotel.length;
 
   const days = [];
   schedule.forEach(s => {
