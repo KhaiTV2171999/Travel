@@ -12,6 +12,10 @@ const SHEET_ID = '';
 
 const LIMITS = { name: 100, note: 500, comment: 1000, people: 20 };
 
+// Bộ nhớ đệm để trả dữ liệu nhanh, không phải đọc Sheet mỗi lần.
+// Sửa tay trong Sheet sẽ hiện trên app sau tối đa CACHE_TTL giây (hoặc chạy hàm clearCache).
+const CACHE_TTL = 60;
+
 // Tên sheet và cột. Code so khớp tên sheet/cột không phân biệt hoa thường và dấu,
 // nên có thể viết "Đăng ký" hay "dang ky" đều được, và thứ tự cột có thể thay đổi.
 const SCHEMA = {
@@ -117,7 +121,7 @@ function json_(fn) {
 
 /* ---------- Xử lý dữ liệu ---------- */
 
-function getData() {
+function readTrip_() {
   const info = getInfo_();
   info.anh_bia = imageUrl_(info.anh_bia);
   const deadline = deadline_();
@@ -148,12 +152,31 @@ function getData() {
     budget: rows_(SCHEMA.budget.name)
       .map(r => ({ item: r.hang_muc || '', amount: money_(r.so_tien), note: r.ghi_chu || '' }))
       .filter(b => b.item),
-    members: getMembers(),
-    comments: getComments(),
   };
 }
 
+// Phần thông tin chuyến đi (ít thay đổi) được cache; danh sách và tin nhắn cache riêng
+function getData() {
+  const trip = cached_('trip', readTrip_);
+  trip.members = getMembers();
+  trip.comments = getComments();
+  return trip;
+}
+
 function getMembers() {
+  return cached_('members', readMembers_);
+}
+
+function getComments() {
+  return cached_('comments', readComments_);
+}
+
+// Chạy tay trong trình soạn thảo Apps Script khi muốn app thấy ngay dữ liệu vừa sửa trong Sheet
+function clearCache() {
+  CacheService.getScriptCache().removeAll(['trip', 'members', 'comments']);
+}
+
+function readMembers_() {
   return rows_(SCHEMA.members.name)
     .map(r => ({
       time: r.thoi_gian || '',
@@ -168,7 +191,7 @@ function getMembers() {
     .filter(m => m.name);
 }
 
-function getComments() {
+function readComments_() {
   return rows_(SCHEMA.comments.name)
     .map(r => ({ time: r.thoi_gian || '', name: r.ten || '', content: r.noi_dung || '' }))
     .filter(c => c.content)
@@ -193,7 +216,7 @@ function register(form) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    if (getMembers().some(m => key_(m.name) === key_(name))) {
+    if (readMembers_().some(m => key_(m.name) === key_(name))) {
       throw new Error('"' + name + '" đã có trong danh sách đăng ký');
     }
     appendRow_(ensureSheet_(SCHEMA.members), {
@@ -204,11 +227,10 @@ function register(form) {
       so_tre_em: children,
       ghi_chu: note,
     });
-    SpreadsheetApp.flush();
+    return refreshCache_('members', readMembers_);
   } finally {
     lock.releaseLock();
   }
-  return getMembers();
 }
 
 function addComment(data) {
@@ -222,11 +244,10 @@ function addComment(data) {
   lock.waitLock(10000);
   try {
     appendRow_(ensureSheet_(SCHEMA.comments), { thoi_gian: new Date(), ten: name, noi_dung: content });
-    SpreadsheetApp.flush();
+    return refreshCache_('comments', readComments_);
   } finally {
     lock.releaseLock();
   }
-  return getComments();
 }
 
 /* ---------- Khởi tạo sheet mẫu: chạy 1 lần trong trình soạn thảo Apps Script ---------- */
@@ -257,8 +278,27 @@ function setupSheets() {
 
 /* ---------- Helpers ---------- */
 
+let ss__ = null;
 function ss_() {
-  return SHEET_ID ? SpreadsheetApp.openById(SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss__) ss__ = SHEET_ID ? SpreadsheetApp.openById(SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+  return ss__;
+}
+
+// Lấy từ cache, không có thì đọc Sheet rồi lưu vào cache
+function cached_(key, read) {
+  const hit = CacheService.getScriptCache().get(key);
+  if (hit) return JSON.parse(hit);
+  return refreshCache_(key, read);
+}
+
+function refreshCache_(key, read) {
+  const value = read();
+  try {
+    CacheService.getScriptCache().put(key, JSON.stringify(value), CACHE_TTL);
+  } catch (err) {
+    console.warn('Không lưu được cache ' + key + ': ' + err.message); // vd dữ liệu quá 100KB
+  }
+  return value;
 }
 
 // "Số người lớn" -> "so_nguoi_lon"

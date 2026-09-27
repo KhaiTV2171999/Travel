@@ -47,7 +47,7 @@ Muốn chạy thử trên máy thì mở terminal trong thư mục dự án, ch�
 - **Sửa giao diện** (`index.html` / `styles.css` / `app.js`): chỉ cần upload lại file đã sửa. Không phải đụng tới Apps Script.
   Nếu điện thoại vẫn hiện bản cũ do trình duyệt còn cache, đổi số phiên bản trong `index.html`, ví dụ `styles.css?v=2`, `app.js?v=2`.
 - **Sửa `Code.gs`**: vào **Triển khai → Quản lý triển khai → ✏️ → Phiên bản: Phiên bản mới**. URL `/exec` giữ nguyên nên không phải sửa `app.js`.
-- **Sửa dữ liệu trong Sheet**: không cần làm gì thêm, người dùng tải lại trang là thấy dữ liệu mới.
+- **Sửa dữ liệu trong Sheet**: không cần deploy lại. Backend lưu tạm dữ liệu 60 giây cho nhanh, nên sau tối đa 1 phút app sẽ thấy dữ liệu mới. Muốn thấy ngay thì chạy hàm `clearCache` trong trình soạn thảo Apps Script.
 
 ## Cấu trúc Google Sheet
 

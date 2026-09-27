@@ -80,14 +80,19 @@ function showTab(tab, skipRefresh) {
     if (tab === 'list') refresh('members');
     if (tab === 'comments') refresh('comments');
   }
-  // Tab trò chuyện: cuộn xuống tin mới nhất và tự tải tin mới mỗi 15 giây
+  // Tab trò chuyện: cuộn xuống tin mới nhất và tự tải tin mới mỗi 8 giây
   clearInterval(chat.timer);
   if (ready && tab === 'comments') {
     chat.stick = true;
     renderComments();
-    chat.timer = setInterval(() => { if (!document.hidden) refresh('comments'); }, 15000);
+    chat.timer = setInterval(() => { if (!document.hidden) refresh('comments'); }, 8000);
   }
 }
+
+// Quay lại trang (mở lại app, chuyển tab trình duyệt) thì tải tin mới ngay
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && state.data && state.tab === 'comments') refresh('comments');
+});
 
 /* ---------- 1. Giới thiệu chuyến đi ---------- */
 const COLORS = ['#ff6b4a', '#14b8a6', '#a855f7', '#ffb020', '#3b82f6', '#ec4899'];
@@ -453,7 +458,7 @@ function renderComments() {
       <div class="msg-body">
         ${first && !mine ? `<div class="msg-name">${esc(c.name)}</div>` : ''}
         <div class="bubble">${esc(c.content)}</div>
-        ${last ? `<div class="msg-time">${c.pending ? 'Đang gửi…' : esc(t.time)}</div>` : ''}
+        ${last ? `<div class="msg-time">${c.pending ? '🕓' : esc(t.time)}</div>` : ''}
       </div>
     </li>`;
   });
