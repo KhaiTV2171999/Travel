@@ -1,0 +1,4 @@
+# Vercel chỉ cần phục vụ giao diện: index.html, styles.css, app.js
+apps-script
+*.xlsx
+README.md
