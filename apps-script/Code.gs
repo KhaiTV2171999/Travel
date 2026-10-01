@@ -90,7 +90,7 @@ const SCHEMA = {
   },
   members: {
     name: 'Đăng ký',
-    headers: ['Thời gian', 'Tên', 'Có người nhà', 'Số người lớn', 'Số trẻ em', 'Ghi chú', 'Ở cùng', 'Loại phòng'],
+    headers: ['Thời gian', 'Tên', 'Có người nhà', 'Số người lớn', 'Số trẻ em', 'Ghi chú', 'Xếp phòng'],
     sample: [],
   },
   comments: {
@@ -99,8 +99,6 @@ const SCHEMA = {
     sample: [],
   },
 };
-
-const ROOM_TYPES = ['Phòng đơn', 'Phòng đôi (1 giường)', 'Phòng twin (2 giường)', 'Phòng 3 người', 'Phòng gia đình'];
 
 /* ---------- API JSON (giao diện index.html / app.js gọi vào đây) ---------- */
 
@@ -207,8 +205,8 @@ function readMembers_() {
       adults: toInt_(r.so_nguoi_lon),
       children: toInt_(r.so_tre_em),
       note: r.ghi_chu || '',
-      roommate: r.o_cung || '',
-      room: r.loai_phong || '',
+      // Cột "Xếp phòng" (người tổ chức tự ghi). Sheet cũ còn 2 cột "Loại phòng" + "Ở cùng" thì ghép lại.
+      room: r.xep_phong || [r.loai_phong, r.o_cung && 'ở cùng ' + r.o_cung].filter(Boolean).join(', '),
     }))
     .filter(m => m.name);
 }
@@ -284,13 +282,6 @@ function setupSheets() {
       def.sample.forEach((row, i) => row.forEach((v, j) => {
         if (v instanceof Date) sh.getRange(i + 2, j + 1).setNumberFormat('dd/MM/yyyy');
       }));
-    }
-    if (k === 'members') {
-      const rule = SpreadsheetApp.newDataValidation()
-        .requireValueInList(ROOM_TYPES, true)
-        .setAllowInvalid(true)
-        .build();
-      sh.getRange(2, def.headers.length, 500, 1).setDataValidation(rule);
     }
     sh.autoResizeColumns(1, def.headers.length);
   });

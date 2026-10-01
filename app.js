@@ -398,7 +398,7 @@ function renderMembers() {
   const me = norm(store.get('travel_name'));
   const rows = list
     .map((m, i) => ({ m, i }))
-    .filter(({ m }) => !q || norm([m.name, m.roommate, m.room, m.note].join(' ')).includes(q));
+    .filter(({ m }) => !q || norm([m.name, m.room, m.note].join(' ')).includes(q));
   const unset = '<span class="unset">Chưa xếp</span>';
 
   // Mỗi người một dòng. Desktop: bảng nhiều cột (.m-det bị "trải" thành các cột).
@@ -407,7 +407,7 @@ function renderMembers() {
     ? `<li class="m-row m-head" aria-hidden="true">
          <span class="m-idx">#</span><span class="m-who">Thành viên</span>
          <span class="m-det"><span class="m-adults">Người lớn</span><span class="m-kids">Trẻ em</span>
-         <span class="m-room">Loại phòng</span><span class="m-mate">Ở cùng</span></span>
+         <span class="m-room">Xếp phòng</span></span>
          <span class="m-note">Ghi chú</span>
        </li>` +
       rows.map(({ m, i }) => {
@@ -419,7 +419,6 @@ function renderMembers() {
             <span class="m-adults" title="Người lớn (tính cả người đăng ký)">${1 + m.adults}</span>
             <span class="m-kids" title="Trẻ em">${m.children}</span>
             <span class="m-room">${m.room ? esc(m.room) : unset}</span>
-            <span class="m-mate">${m.roommate ? esc(m.roommate) : unset}</span>
           </span>
           <span class="m-note">${esc(m.note)}</span>
         </li>`;

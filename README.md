@@ -76,8 +76,8 @@ Tên sheet và tên cột không phân biệt hoa/thường hay có dấu/không
 ### `Lịch trình`: Ngày | Giờ | Hoạt động | Địa điểm | Ghi chú | Ảnh
 Chỉ cần ghi cột **Ngày** ở dòng đầu tiên của mỗi ngày. Các dòng sau để trống sẽ được tính chung vào ngày đó.
 ### `Kinh phí`: Hạng mục | Số tiền | Ghi chú
-### `Đăng ký`: Thời gian | Tên | Có người nhà | Số người lớn | Số trẻ em | Ghi chú | **Ở cùng** | **Loại phòng**
-Các cột đầu do app tự ghi. Người tổ chức tự điền 2 cột **Ở cùng** và **Loại phòng** (có sẵn danh sách chọn) để xếp phòng, rồi app sẽ hiển thị ở tab Danh sách.
+### `Đăng ký`: Thời gian | Tên | Có người nhà | Số người lớn | Số trẻ em | Ghi chú | **Xếp phòng**
+Các cột đầu do app tự ghi. Người tổ chức tự điền cột **Xếp phòng** (ghi tự do, vd: `Phòng 201 - phòng đôi, ở cùng Hà`), app sẽ hiển thị ở tab Danh sách.
 - "Số người lớn" là số người lớn đi cùng, **không tính** người đăng ký.
 - Muốn xoá hoặc sửa một đăng ký thì sửa trực tiếp trên Sheet.
 ### `Bình luận`: Thời gian | Tên | Nội dung
