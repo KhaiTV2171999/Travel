@@ -392,6 +392,7 @@ function renderMembers() {
     [st.adults, 'người lớn', COLORS[2]],
     [st.children, 'trẻ em', COLORS[4]],
     [st.people, 'tổng', COLORS[1]],
+    [new Set(list.map(m => m.room.trim()).filter(Boolean)).size, 'phòng', COLORS[3]],
   ].map(s => `<div class="stat" style="--c:${s[2]}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('');
 
   const q = norm($('#memberSearch').value);
@@ -399,28 +400,45 @@ function renderMembers() {
   const rows = list
     .map((m, i) => ({ m, i }))
     .filter(({ m }) => !q || norm([m.name, m.room, m.note].join(' ')).includes(q));
-  const unset = '<span class="unset">Chưa xếp</span>';
 
-  // Mỗi người một dòng. Desktop: bảng nhiều cột (.m-det bị "trải" thành các cột).
-  // Điện thoại: tên ở dòng 1, số người + phòng ở dòng 2, ghi chú ở dòng 3.
+  // Gom theo cột "Xếp phòng": cùng giá trị = ở chung phòng. Sắp theo số phòng, chưa xếp nằm cuối.
+  const groups = new Map();
+  rows.forEach(r => {
+    const key = r.m.room.trim();
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  });
+  const rooms = [...groups.keys()].sort((a, b) =>
+    !a ? 1 : !b ? -1 : a.localeCompare(b, 'vi', { numeric: true }));
+
+  const row = ({ m, i }) => {
+    const isMe = me && norm(m.name) === me;
+    return `<li class="m-row ${isMe ? 'me' : ''}">
+      <span class="m-idx">${i + 1}</span>
+      <span class="m-who">${avatar(m.name, 'sm')}<b>${esc(m.name)}</b>${isMe ? '<span class="tag" style="--c:var(--coral)">Bạn</span>' : ''}</span>
+      <span class="m-det">
+        <span class="m-adults" title="Người lớn (tính cả người đăng ký)">${1 + m.adults}</span>
+        <span class="m-kids" title="Trẻ em">${m.children}</span>
+      </span>
+      <span class="m-note">${esc(m.note)}</span>
+    </li>`;
+  };
+
+  // Desktop: bảng nhiều cột (.m-det bị "trải" thành các cột). Điện thoại: mỗi người 2–3 dòng.
   $('#memberList').innerHTML = rows.length
     ? `<li class="m-row m-head" aria-hidden="true">
          <span class="m-idx">#</span><span class="m-who">Thành viên</span>
-         <span class="m-det"><span class="m-adults">Người lớn</span><span class="m-kids">Trẻ em</span>
-         <span class="m-room">Xếp phòng</span></span>
+         <span class="m-det"><span class="m-adults">Người lớn</span><span class="m-kids">Trẻ em</span></span>
          <span class="m-note">Ghi chú</span>
        </li>` +
-      rows.map(({ m, i }) => {
-        const isMe = me && norm(m.name) === me;
-        return `<li class="m-row ${isMe ? 'me' : ''}">
-          <span class="m-idx">${i + 1}</span>
-          <span class="m-who">${avatar(m.name, 'sm')}<b>${esc(m.name)}</b>${isMe ? '<span class="tag" style="--c:var(--coral)">Bạn</span>' : ''}</span>
-          <span class="m-det">
-            <span class="m-adults" title="Người lớn (tính cả người đăng ký)">${1 + m.adults}</span>
-            <span class="m-kids" title="Trẻ em">${m.children}</span>
-            <span class="m-room">${m.room ? esc(m.room) : unset}</span>
-          </span>
-          <span class="m-note">${esc(m.note)}</span>
+      rooms.map((room, gi) => {
+        const items = groups.get(room);
+        const people = memberStats(items.map(r => r.m)).people;
+        const label = !room ? 'Chưa xếp phòng' : /^\d+$/.test(room) ? 'Phòng ' + room : room;
+        return `<li class="room-group ${room ? '' : 'unassigned'}" style="--c:${room ? COLORS[gi % COLORS.length] : 'var(--muted)'}">
+          <div class="room-head">${room ? '🛏️' : '⏳'} <b>${esc(label)}</b>
+            <span>· ${items.length} thành viên${people !== items.length ? ` · ${people} người` : ''}</span></div>
+          <ul>${items.map(row).join('')}</ul>
         </li>`;
       }).join('')
     : `<li class="empty">${q ? '🔍 Không tìm thấy ai' : '🙋 Chưa có ai đăng ký, hãy là người đầu tiên!'}</li>`;
