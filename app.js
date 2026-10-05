@@ -224,6 +224,7 @@ const SUBTABS = [
   ['overview', 'Tổng quan'],
   ['schedule', 'Lịch trình'],
   ['budget', 'Kinh phí'],
+  ['pay', 'Nộp tiền'],
 ];
 
 function renderSubtabs() {
@@ -266,42 +267,133 @@ function memberStats(list) {
 }
 
 function renderBudget() {
-  const { info, budget, members } = state.data;
+  const { budget } = state.data;
   const total = budget.reduce((s, b) => s + b.amount, 0);
-  const feeAdult = parseMoney(info.phi_nguoi_lon);
-  const feeChild = parseMoney(info.phi_tre_em);
-  const st = memberStats(members);
-  const estimate = st.adults * feeAdult + st.children * feeChild;
   const color = i => COLORS[i % COLORS.length];
 
-  // Chia 2 khối: danh sách khoản chi và phí mỗi người (desktop hiện thành 2 cột)
-  let list = '';
+  let html = '';
   if (budget.length) {
     if (total > 0) {
-      list += `<div class="bar" aria-hidden="true">${budget.map((b, i) =>
+      html += `<div class="bar" aria-hidden="true">${budget.map((b, i) =>
         `<span style="width:${Math.max(0, b.amount) / total * 100}%;background:${color(i)}"></span>`).join('')}</div>`;
     }
-    list += budget.map((b, i) => `<div class="budget-row">
+    html += budget.map((b, i) => `<div class="budget-row">
         <span class="dot" style="background:${color(i)}"></span>
         <div class="name">${esc(b.item)}${b.note ? `<div class="muted small">${esc(b.note)}</div>` : ''}</div>
         <div class="amt">${money(b.amount)}</div>
       </div>`).join('');
-    list += `<div class="budget-total"><span>Tổng chi phí</span><span class="amt">${money(total)}</span></div>`;
+    html += `<div class="budget-total"><span>Tổng chi phí</span><span class="amt">${money(total)}</span></div>`;
   }
-  let side = '';
-  if (feeAdult || feeChild) {
-    side += `<div class="fees">
-      <div class="fee adult"><div class="lbl">🧑 Người lớn</div><div class="val">${money(feeAdult)}</div><div class="lbl">mỗi người</div></div>
-      <div class="fee child"><div class="lbl">🧒 Trẻ em</div><div class="val">${money(feeChild)}</div><div class="lbl">mỗi người</div></div>
-    </div>`;
-    if (st.count) {
-      side += `<p class="estimate">🧮 Tạm thu theo <b>${st.people}</b> người đã đăng ký
-        (${st.adults} người lớn, ${st.children} trẻ em): <b>${money(estimate)}</b></p>`;
-    }
-  }
-  const html = (list ? `<div class="budget-main">${list}</div>` : '') + (side ? `<div class="budget-side">${side}</div>` : '');
   $('#budgetBox').innerHTML = html;
   $('#sec-budget').hidden = !html;
+  renderPayment();
+}
+
+/* ---------- Nộp tiền: chỉ tính người lớn (người đăng ký + người lớn đi cùng) ---------- */
+// Bỏ dấu cho nội dung chuyển khoản: "Trần Văn Khải" -> "Tran Van Khai"
+const ascii = s => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
+  .replace(/[^A-Za-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+
+function renderPayment() {
+  const { info, members } = state.data;
+  const fee = parseMoney(info.phi_nguoi_lon);
+  $('#sec-pay').hidden = !fee || !members.length;
+  if ($('#sec-pay').hidden) return;
+
+  const rows = members.map(m => {
+    const adults = 1 + m.adults;
+    const due = adults * fee;
+    const paid = m.paid || 0;
+    return { m, adults, due, paid, left: Math.max(0, due - paid) };
+  });
+  const totalDue = rows.reduce((s, r) => s + r.due, 0);
+  const collected = rows.reduce((s, r) => s + r.paid, 0);
+  const done = rows.filter(r => r.paid >= r.due).length;
+  const adults = rows.reduce((s, r) => s + r.adults, 0);
+
+  // Người đang chọn để hiện QR: mặc định là tên đã lưu trên máy
+  const me = norm(store.get('travel_name'));
+  if (state.payFor === undefined) {
+    const mine = rows.find(r => me && norm(r.m.name) === me);
+    state.payFor = mine ? mine.m.name : '';
+  }
+  const sel = rows.find(r => r.m.name === state.payFor);
+
+  // Khối 1: tổng quan thu tiền
+  const summary = `<div class="card pay-sum">
+    <div class="pay-fee"><span>Mỗi người lớn</span><b>${money(fee)}</b></div>
+    <p class="muted small">Trẻ em không tính tiền · ${adults} người lớn · cần thu ${money(totalDue)}</p>
+    <div class="progress" aria-label="Đã thu"><span style="width:${totalDue ? Math.min(100, collected / totalDue * 100) : 0}%"></span></div>
+    <div class="pay-nums"><span>Đã thu <b>${money(collected)}</b></span><span><b>${done}/${rows.length}</b> đã nộp đủ</span></div>
+  </div>`;
+
+  // Khối 2: chuyển khoản + QR theo người được chọn
+  const acc = String(info.so_tai_khoan || '').replace(/\s/g, '');
+  const bank = String(info.ngan_hang || '').trim();
+  const holder = info.chu_tai_khoan || '';
+  let transfer = '';
+  if (acc) {
+    const content = sel ? `${ascii(sel.m.name)} nop tien du lich`.slice(0, 50) : '';
+    const qr = bank && sel && sel.left > 0
+      ? `https://img.vietqr.io/image/${encodeURIComponent(bank)}-${encodeURIComponent(acc)}-compact2.png?amount=${sel.left}` +
+        `&addInfo=${encodeURIComponent(content)}&accountName=${encodeURIComponent(ascii(holder))}`
+      : '';
+    transfer = `<div class="card bank">
+      <h3>🏦 Chuyển khoản</h3>
+      <label class="field"><span>Bạn là ai?</span>
+        <select id="payFor">
+          <option value="">Chọn tên để xem số tiền & mã QR</option>
+          ${rows.map(r => `<option value="${esc(r.m.name)}" ${r.m.name === state.payFor ? 'selected' : ''}>${esc(r.m.name)}</option>`).join('')}
+        </select>
+      </label>
+      ${sel ? `<div class="bank-row big"><span class="lbl">Cần nộp</span>
+          <span class="v ${sel.left > 0 ? '' : 'ok'}">${sel.left > 0 ? money(sel.left) : '✅ Đã nộp đủ'}</span></div>
+        <div class="muted small">${sel.adults} người lớn × ${money(fee)}${sel.paid ? ` · đã nộp ${money(sel.paid)}` : ''}</div>` : ''}
+      ${bank ? `<div class="bank-row"><span class="lbl">Ngân hàng</span><span class="v">${esc(bank)}</span></div>` : ''}
+      <div class="bank-row"><span class="lbl">Số tài khoản</span>
+        <span class="v">${esc(acc)}<button type="button" class="copy" data-copy="${esc(acc)}">Sao chép</button></span></div>
+      ${holder ? `<div class="bank-row"><span class="lbl">Chủ tài khoản</span><span class="v">${esc(holder)}</span></div>` : ''}
+      ${content ? `<div class="bank-row"><span class="lbl">Nội dung</span>
+        <span class="v">${esc(content)}<button type="button" class="copy" data-copy="${esc(content)}">Sao chép</button></span></div>` : ''}
+      ${qr ? `<img class="qr" src="${esc(qr)}" alt="Mã QR chuyển khoản" loading="lazy" onerror="this.remove()">
+        <p class="muted small center">Mở app ngân hàng → Quét QR, số tiền và nội dung đã điền sẵn</p>` : ''}
+    </div>`;
+  }
+
+  // Khối 3: danh sách ai đã nộp
+  const status = r => r.paid >= r.due ? '<span class="st ok">✅ Đã nộp</span>'
+    : r.paid > 0 ? `<span class="st part">Thiếu ${money(r.left)}</span>`
+    : '<span class="st no">Chưa nộp</span>';
+  const list = `<div class="card">
+    <h3>📋 Tình hình nộp tiền</h3>
+    <ul class="pay-list">
+      ${rows.map(r => `<li class="pay-row ${me && norm(r.m.name) === me ? 'me' : ''}">
+        <div><b>${esc(r.m.name)}</b>
+          <div class="muted small">${r.adults} người lớn · ${money(r.due)}${r.paid && r.paid < r.due ? ` · đã nộp ${money(r.paid)}` : ''}</div></div>
+        ${status(r)}
+      </li>`).join('')}
+    </ul>
+  </div>`;
+
+  $('#payBox').innerHTML = `<div class="pay-col">${summary}${transfer}</div>${list}`;
+}
+
+document.addEventListener('change', e => {
+  if (e.target.id === 'payFor') {
+    state.payFor = e.target.value;
+    renderPayment();
+  }
+});
+
+function copyText(text) {
+  const done = () => toast('📋 Đã sao chép: ' + text);
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).then(done, () => {});
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); done(); } catch (err) { /* bỏ qua */ }
+  ta.remove();
 }
 
 /* ---------- 2. Đăng ký ---------- */
@@ -445,6 +537,7 @@ function renderMembers() {
 
   renderBudget();
   renderCrowd();
+  renderSubtabs();
 }
 
 $('#memberSearch').addEventListener('input', renderMembers);
@@ -626,6 +719,8 @@ document.addEventListener('click', e => {
     more.textContent = open ? 'Xem thêm' : 'Thu gọn';
     return;
   }
+  const cp = t.closest('[data-copy]');
+  if (cp) return copyText(cp.dataset.copy);
   const rf = t.closest('[data-refresh]');
   if (rf) refresh(rf.dataset.refresh, rf);
 });

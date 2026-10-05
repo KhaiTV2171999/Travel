@@ -35,7 +35,9 @@ const SCHEMA = {
       ['Thư mục ảnh', ''],
       ['Giới thiệu', 'Chuyến nghỉ dưỡng cuối năm cùng gia đình: săn mây, cà phê view đồi thông, BBQ tối và tham quan các điểm nổi tiếng của Đà Lạt.'],
       ['Phí người lớn', 2500000],
-      ['Phí trẻ em', 1200000],
+      ['Ngân hàng', 'MB'],
+      ['Số tài khoản', "'0123456789"],
+      ['Chủ tài khoản', 'NGUYEN VAN MINH'],
     ],
   },
   guide: {
@@ -90,7 +92,7 @@ const SCHEMA = {
   },
   members: {
     name: 'Đăng ký',
-    headers: ['Thời gian', 'Tên', 'Có người nhà', 'Số người lớn', 'Số trẻ em', 'Ghi chú', 'Xếp phòng'],
+    headers: ['Thời gian', 'Tên', 'Có người nhà', 'Số người lớn', 'Số trẻ em', 'Ghi chú', 'Xếp phòng', 'Đã nộp'],
     sample: [],
   },
   comments: {
@@ -207,6 +209,7 @@ function readMembers_() {
       note: r.ghi_chu || '',
       // Cột "Xếp phòng" (người tổ chức tự ghi). Sheet cũ còn 2 cột "Loại phòng" + "Ở cùng" thì ghép lại.
       room: r.xep_phong || [r.loai_phong, r.o_cung && 'ở cùng ' + r.o_cung].filter(Boolean).join(', '),
+      paid: money_(r.da_nop), // số tiền đã nộp, người tổ chức tự ghi
     }))
     .filter(m => m.name);
 }
