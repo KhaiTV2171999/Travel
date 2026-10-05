@@ -291,6 +291,9 @@ function renderBudget() {
 
 /* ---------- Nộp tiền: chỉ tính người lớn (người đăng ký + người lớn đi cùng) ---------- */
 // Bỏ dấu cho nội dung chuyển khoản: "Trần Văn Khải" -> "Tran Van Khai"
+// Ảnh QR nhận tiền (cắt từ app ngân hàng), đặt cùng thư mục với index.html
+const QR_IMAGE = 'qr-card.jpg?v=1';
+
 const ascii = s => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
   .replace(/[^A-Za-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
 
@@ -327,38 +330,35 @@ function renderPayment() {
     <div class="pay-nums"><span>Đã thu <b>${money(collected)}</b></span><span><b>${done}/${rows.length}</b> đã nộp đủ</span></div>
   </div>`;
 
-  // Khối 2: chuyển khoản + QR theo người được chọn
+  // Khối 2: chuyển khoản bằng ảnh QR của người thu tiền (qr-card.jpg) + số tiền/nội dung theo người được chọn
   const acc = String(info.so_tai_khoan || '').replace(/\s/g, '');
   const bank = String(info.ngan_hang || '').trim();
   const holder = info.chu_tai_khoan || '';
-  let transfer = '';
-  if (acc) {
-    const content = sel ? `${ascii(sel.m.name)} nop tien du lich`.slice(0, 50) : '';
-    const qr = bank && sel && sel.left > 0
-      ? `https://img.vietqr.io/image/${encodeURIComponent(bank)}-${encodeURIComponent(acc)}-compact2.png?amount=${sel.left}` +
-        `&addInfo=${encodeURIComponent(content)}&accountName=${encodeURIComponent(ascii(holder))}`
-      : '';
-    transfer = `<div class="card bank">
-      <h3>🏦 Chuyển khoản</h3>
-      <label class="field"><span>Bạn là ai?</span>
-        <select id="payFor">
-          <option value="">Chọn tên để xem số tiền & mã QR</option>
-          ${rows.map(r => `<option value="${esc(r.m.name)}" ${r.m.name === state.payFor ? 'selected' : ''}>${esc(r.m.name)}</option>`).join('')}
-        </select>
-      </label>
-      ${sel ? `<div class="bank-row big"><span class="lbl">Cần nộp</span>
-          <span class="v ${sel.left > 0 ? '' : 'ok'}">${sel.left > 0 ? money(sel.left) : '✅ Đã nộp đủ'}</span></div>
-        <div class="muted small">${sel.adults} người lớn × ${money(fee)}${sel.paid ? ` · đã nộp ${money(sel.paid)}` : ''}</div>` : ''}
-      ${bank ? `<div class="bank-row"><span class="lbl">Ngân hàng</span><span class="v">${esc(bank)}</span></div>` : ''}
-      <div class="bank-row"><span class="lbl">Số tài khoản</span>
-        <span class="v">${esc(acc)}<button type="button" class="copy" data-copy="${esc(acc)}">Sao chép</button></span></div>
-      ${holder ? `<div class="bank-row"><span class="lbl">Chủ tài khoản</span><span class="v">${esc(holder)}</span></div>` : ''}
-      ${content ? `<div class="bank-row"><span class="lbl">Nội dung</span>
-        <span class="v">${esc(content)}<button type="button" class="copy" data-copy="${esc(content)}">Sao chép</button></span></div>` : ''}
-      ${qr ? `<img class="qr" src="${esc(qr)}" alt="Mã QR chuyển khoản" loading="lazy" onerror="this.remove()">
-        <p class="muted small center">Mở app ngân hàng → Quét QR, số tiền và nội dung đã điền sẵn</p>` : ''}
-    </div>`;
-  }
+  const content = sel ? `${ascii(sel.m.name)} nop tien du lich`.slice(0, 50) : '';
+  const transfer = `<div class="card bank">
+    <h3>🏦 Chuyển khoản</h3>
+    <button type="button" class="qr" data-zoom="${QR_IMAGE}" aria-label="Phóng to mã QR">
+      <img src="${QR_IMAGE}" alt="Mã QR nhận tiền" loading="lazy">
+    </button>
+    <p class="muted small center">Quét mã QR bằng app ngân hàng, rồi nhập <b>số tiền</b> và <b>nội dung</b> bên dưới</p>
+    <label class="field"><span>Bạn là ai?</span>
+      <select id="payFor">
+        <option value="">Chọn tên để xem số tiền cần nộp</option>
+        ${rows.map(r => `<option value="${esc(r.m.name)}" ${r.m.name === state.payFor ? 'selected' : ''}>${esc(r.m.name)}</option>`).join('')}
+      </select>
+    </label>
+    ${sel ? `<div class="bank-row big"><span class="lbl">Cần nộp</span>
+        <span class="v ${sel.left > 0 ? '' : 'ok'}">${sel.left > 0
+          ? `${money(sel.left)}<button type="button" class="copy" data-copy="${sel.left}">Sao chép</button>`
+          : '✅ Đã nộp đủ'}</span></div>
+      <div class="muted small">${sel.adults} người lớn × ${money(fee)}${sel.paid ? ` · đã nộp ${money(sel.paid)}` : ''}</div>
+      ${sel.left > 0 ? `<div class="bank-row"><span class="lbl">Nội dung</span>
+        <span class="v">${esc(content)}<button type="button" class="copy" data-copy="${esc(content)}">Sao chép</button></span></div>` : ''}` : ''}
+    ${bank ? `<div class="bank-row"><span class="lbl">Ngân hàng</span><span class="v">${esc(bank)}</span></div>` : ''}
+    ${acc ? `<div class="bank-row"><span class="lbl">Số tài khoản</span>
+      <span class="v">${esc(acc)}<button type="button" class="copy" data-copy="${esc(acc)}">Sao chép</button></span></div>` : ''}
+    ${holder ? `<div class="bank-row"><span class="lbl">Chủ tài khoản</span><span class="v">${esc(holder)}</span></div>` : ''}
+  </div>`;
 
   // Khối 3: danh sách ai đã nộp
   const status = r => r.paid >= r.due ? '<span class="st ok">✅ Đã nộp</span>'
