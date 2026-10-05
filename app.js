@@ -77,7 +77,7 @@ function showTab(tab, skipRefresh) {
   $$('.bottom-nav button:not(.nav-brand)').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
   window.scrollTo(0, 0);
   if (ready && !skipRefresh) {
-    if (tab === 'list') refresh('members');
+    if (tab === 'list' || tab === 'pay') refresh('members');
     if (tab === 'comments') refresh('comments');
   }
   // Tab trò chuyện: cuộn xuống tin mới nhất và tự tải tin mới mỗi 8 giây
@@ -224,7 +224,6 @@ const SUBTABS = [
   ['overview', 'Tổng quan'],
   ['schedule', 'Lịch trình'],
   ['budget', 'Kinh phí'],
-  ['pay', 'Nộp tiền'],
 ];
 
 function renderSubtabs() {
@@ -300,8 +299,12 @@ const ascii = s => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').repla
 function renderPayment() {
   const { info, members } = state.data;
   const fee = parseMoney(info.phi_nguoi_lon);
-  $('#sec-pay').hidden = !fee || !members.length;
-  if ($('#sec-pay').hidden) return;
+  if (!fee || !members.length) {
+    $('#payBox').innerHTML = `<div class="card empty">${!fee
+      ? '🛠️ Chưa có thông tin nộp tiền.<br>Người tổ chức cần điền "Phí người lớn" trong Sheet.'
+      : '🙋 Chưa có ai đăng ký.'}</div>`;
+    return;
+  }
 
   const rows = members.map(m => {
     const adults = 1 + m.adults;

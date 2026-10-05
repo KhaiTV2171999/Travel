@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap">
-<link rel="stylesheet" href="styles.css?v=29">
+<link rel="stylesheet" href="styles.css?v=30">
 </head>
 <body>
 
@@ -52,9 +52,6 @@
       </section>
       <section id="sec-budget" class="card" data-panel="budget" hidden>
         <div id="budgetBox"></div>
-      </section>
-      <section id="sec-pay" data-panel="pay" hidden>
-        <div id="payBox"></div>
       </section>
       <div class="card empty" id="tripEmpty" hidden>🛠️ Thông tin chuyến đi đang được cập nhật,<br>quay lại sau nhé!</div>
     </div>
@@ -115,6 +112,26 @@
           <button class="btn primary block cta" type="submit">🎉 Đăng ký ngay</button>
         </fieldset>
       </form>
+    </div>
+  </section>
+
+  <!-- Nộp tiền -->
+  <section id="tab-pay" class="tab" hidden>
+    <div class="page-hero">
+      <div class="row">
+        <div>
+          <h1>Nộp tiền</h1>
+          <p>Chỉ tính người lớn 💸</p>
+        </div>
+        <button class="icon-btn" type="button" data-refresh="members" aria-label="Tải lại">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg>
+        </button>
+      </div>
+      <div class="deco">💰</div>
+      <svg class="waves" viewBox="0 0 1440 100" preserveAspectRatio="none" aria-hidden="true"><path fill="currentColor" d="M0,50 C240,100 480,0 720,40 C960,80 1200,20 1440,50 L1440,100 L0,100 Z"/></svg>
+    </div>
+    <div class="page">
+      <div id="payBox"></div>
     </div>
   </section>
 
@@ -180,6 +197,10 @@
 
 <nav class="bottom-nav" aria-label="Điều hướng">
   <button type="button" class="nav-brand" data-tab="trip" id="navBrand">✈️ Chuyến du lịch</button>
+  <button type="button" data-tab="pay">
+    <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1H5a2 2 0 0 0-2 2z"/><path d="M3 9v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7H5"/><circle cx="16.5" cy="14" r="1.2"/></svg></span>
+    Nộp tiền
+  </button>
   <button type="button" data-tab="trip" aria-current="page">
     <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg></span>
     Chuyến đi
@@ -200,6 +221,6 @@
 
 <div class="toast" id="toast" role="status"></div>
 
-<script src="app.js?v=29"></script>
+<script src="app.js?v=30"></script>
 </body>
 </html>
