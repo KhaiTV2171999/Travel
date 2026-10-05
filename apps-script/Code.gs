@@ -35,6 +35,7 @@ const SCHEMA = {
       ['Thư mục ảnh', ''],
       ['Giới thiệu', 'Chuyến nghỉ dưỡng cuối năm cùng gia đình: săn mây, cà phê view đồi thông, BBQ tối và tham quan các điểm nổi tiếng của Đà Lạt.'],
       ['Phí người lớn', 2500000],
+      ['Đã quyết toán', 'Không'],
       ['Ngân hàng', 'MB'],
       ['Số tài khoản', "'0123456789"],
       ['Chủ tài khoản', 'NGUYEN VAN MINH'],

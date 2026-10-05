@@ -296,28 +296,38 @@ const QR_IMAGE = 'qr-card.jpg?v=1';
 const ascii = s => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
   .replace(/[^A-Za-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
 
+// Hai giai đoạn:
+// - Tạm thu: mỗi người lớn nộp "Phí người lớn".
+// - Quyết toán ("Đã quyết toán" = Có): mức thực tế = tổng Kinh phí ÷ tổng người lớn (làm tròn nghìn),
+//   so với số đã nộp -> nộp thêm / được trả lại.
 function renderPayment() {
-  const { info, members } = state.data;
+  const { info, members, budget } = state.data;
   const fee = parseMoney(info.phi_nguoi_lon);
-  if (!fee || !members.length) {
-    $('#payBox').innerHTML = `<div class="card empty">${!fee
+  const cost = budget.reduce((s, b) => s + b.amount, 0);
+  const adults = members.reduce((s, m) => s + 1 + m.adults, 0);
+  const settled = /^(co|x|true|yes|1)$/.test(norm(info.da_quyet_toan).replace(/\s+/g, '')) && cost > 0 && adults > 0;
+  const per = settled ? Math.round(cost / adults / 1000) * 1000 : fee;
+
+  if (!per || !members.length) {
+    $('#payBox').innerHTML = `<div class="card empty">${!per
       ? '🛠️ Chưa có thông tin nộp tiền.<br>Người tổ chức cần điền "Phí người lớn" trong Sheet.'
       : '🙋 Chưa có ai đăng ký.'}</div>`;
     return;
   }
 
   const rows = members.map(m => {
-    const adults = 1 + m.adults;
-    const due = adults * fee;
+    const n = 1 + m.adults;
+    const due = n * per;
     const paid = m.paid || 0;
-    return { m, adults, due, paid, left: Math.max(0, due - paid) };
+    return { m, adults: n, due, paid, diff: due - paid }; // diff > 0: còn thiếu, < 0: thừa
   });
   const totalDue = rows.reduce((s, r) => s + r.due, 0);
   const collected = rows.reduce((s, r) => s + r.paid, 0);
-  const done = rows.filter(r => r.paid >= r.due).length;
-  const adults = rows.reduce((s, r) => s + r.adults, 0);
+  const owe = rows.reduce((s, r) => s + Math.max(0, r.diff), 0);
+  const refund = rows.reduce((s, r) => s + Math.max(0, -r.diff), 0);
+  const done = rows.filter(r => r.diff === 0 || (!settled && r.diff < 0)).length;
 
-  // Người đang chọn để hiện QR: mặc định là tên đã lưu trên máy
+  // Người đang chọn: mặc định là tên đã lưu trên máy
   const me = norm(store.get('travel_name'));
   if (state.payFor === undefined) {
     const mine = rows.find(r => me && norm(r.m.name) === me);
@@ -325,19 +335,45 @@ function renderPayment() {
   }
   const sel = rows.find(r => r.m.name === state.payFor);
 
-  // Khối 1: tổng quan thu tiền
-  const summary = `<div class="card pay-sum">
-    <div class="pay-fee"><span>Mỗi người lớn</span><b>${money(fee)}</b></div>
-    <p class="muted small">Trẻ em không tính tiền · ${adults} người lớn · cần thu ${money(totalDue)}</p>
-    <div class="progress" aria-label="Đã thu"><span style="width:${totalDue ? Math.min(100, collected / totalDue * 100) : 0}%"></span></div>
-    <div class="pay-nums"><span>Đã thu <b>${money(collected)}</b></span><span><b>${done}/${rows.length}</b> đã nộp đủ</span></div>
-  </div>`;
+  // Khối 1: tổng quan
+  const summary = settled
+    ? `<div class="card pay-sum">
+        <span class="phase done">🧾 Đã quyết toán</span>
+        <div class="pay-fee"><span>Thực tế mỗi người lớn</span><b>${money(per)}</b></div>
+        <p class="muted small">Tổng chi phí ${money(cost)} ÷ ${adults} người lớn${fee ? ` · tạm thu ${money(fee)}/người` : ''}</p>
+        <div class="settle-grid">
+          <div><span>Đã thu</span><b>${money(collected)}</b></div>
+          <div class="owe"><span>Cần thu thêm</span><b>${money(owe)}</b></div>
+          <div class="refund"><span>Cần trả lại</span><b>${money(refund)}</b></div>
+        </div>
+      </div>`
+    : `<div class="card pay-sum">
+        <span class="phase">⏳ Đang tạm thu</span>
+        <div class="pay-fee"><span>Mỗi người lớn</span><b>${money(per)}</b></div>
+        <p class="muted small">Trẻ em không tính tiền · ${adults} người lớn · cần thu ${money(totalDue)}.
+          Sau chuyến đi sẽ quyết toán theo chi phí thực tế (nộp thêm hoặc trả lại).</p>
+        <div class="progress" aria-label="Đã thu"><span style="width:${totalDue ? Math.min(100, collected / totalDue * 100) : 0}%"></span></div>
+        <div class="pay-nums"><span>Đã thu <b>${money(collected)}</b></span><span><b>${done}/${rows.length}</b> đã nộp đủ</span></div>
+      </div>`;
 
-  // Khối 2: chuyển khoản bằng ảnh QR của người thu tiền (qr-card.jpg) + số tiền/nội dung theo người được chọn
+  // Khối 2: chuyển khoản bằng ảnh QR + số tiền/nội dung theo người được chọn
   const acc = String(info.so_tai_khoan || '').replace(/\s/g, '');
   const bank = String(info.ngan_hang || '').trim();
   const holder = info.chu_tai_khoan || '';
-  const content = sel ? `${ascii(sel.m.name)} nop tien du lich`.slice(0, 50) : '';
+  const content = sel ? `${ascii(sel.m.name)} ${settled ? 'nop them' : 'nop tien'} du lich`.slice(0, 50) : '';
+  let selInfo = '';
+  if (sel) {
+    const label = sel.diff > 0 ? (settled && sel.paid ? 'Cần nộp thêm' : 'Cần nộp')
+      : sel.diff < 0 && settled ? 'Được trả lại' : '';
+    selInfo = `<div class="bank-row big"><span class="lbl">${label || 'Trạng thái'}</span>
+        <span class="v ${sel.diff > 0 ? '' : sel.diff < 0 && settled ? 'refund' : 'ok'}">${sel.diff > 0
+          ? `${money(sel.diff)}<button type="button" class="copy" data-copy="${sel.diff}">Sao chép</button>`
+          : sel.diff < 0 && settled ? money(-sel.diff) : '✅ Đã nộp đủ'}</span></div>
+      <div class="muted small">${sel.adults} người lớn × ${money(per)} = ${money(sel.due)}${sel.paid ? ` · đã nộp ${money(sel.paid)}` : ''}</div>
+      ${sel.diff < 0 && settled ? '<div class="muted small">Người tổ chức sẽ chuyển trả lại cho bạn.</div>' : ''}
+      ${sel.diff > 0 ? `<div class="bank-row"><span class="lbl">Nội dung</span>
+        <span class="v">${esc(content)}<button type="button" class="copy" data-copy="${esc(content)}">Sao chép</button></span></div>` : ''}`;
+  }
   const transfer = `<div class="card bank">
     <h3>🏦 Chuyển khoản</h3>
     <button type="button" class="qr" data-zoom="${QR_IMAGE}" aria-label="Phóng to mã QR">
@@ -346,33 +382,32 @@ function renderPayment() {
     <p class="muted small center">Quét mã QR bằng app ngân hàng, rồi nhập <b>số tiền</b> và <b>nội dung</b> bên dưới</p>
     <label class="field"><span>Bạn là ai?</span>
       <select id="payFor">
-        <option value="">Chọn tên để xem số tiền cần nộp</option>
+        <option value="">Chọn tên để xem số tiền của bạn</option>
         ${rows.map(r => `<option value="${esc(r.m.name)}" ${r.m.name === state.payFor ? 'selected' : ''}>${esc(r.m.name)}</option>`).join('')}
       </select>
     </label>
-    ${sel ? `<div class="bank-row big"><span class="lbl">Cần nộp</span>
-        <span class="v ${sel.left > 0 ? '' : 'ok'}">${sel.left > 0
-          ? `${money(sel.left)}<button type="button" class="copy" data-copy="${sel.left}">Sao chép</button>`
-          : '✅ Đã nộp đủ'}</span></div>
-      <div class="muted small">${sel.adults} người lớn × ${money(fee)}${sel.paid ? ` · đã nộp ${money(sel.paid)}` : ''}</div>
-      ${sel.left > 0 ? `<div class="bank-row"><span class="lbl">Nội dung</span>
-        <span class="v">${esc(content)}<button type="button" class="copy" data-copy="${esc(content)}">Sao chép</button></span></div>` : ''}` : ''}
+    ${selInfo}
     ${bank ? `<div class="bank-row"><span class="lbl">Ngân hàng</span><span class="v">${esc(bank)}</span></div>` : ''}
     ${acc ? `<div class="bank-row"><span class="lbl">Số tài khoản</span>
       <span class="v">${esc(acc)}<button type="button" class="copy" data-copy="${esc(acc)}">Sao chép</button></span></div>` : ''}
     ${holder ? `<div class="bank-row"><span class="lbl">Chủ tài khoản</span><span class="v">${esc(holder)}</span></div>` : ''}
   </div>`;
 
-  // Khối 3: danh sách ai đã nộp
-  const status = r => r.paid >= r.due ? '<span class="st ok">✅ Đã nộp</span>'
-    : r.paid > 0 ? `<span class="st part">Thiếu ${money(r.left)}</span>`
-    : '<span class="st no">Chưa nộp</span>';
+  // Khối 3: tình hình từng người
+  const status = r => {
+    if (r.diff > 0) {
+      if (r.paid === 0) return `<span class="st no">Chưa nộp</span>`;
+      return `<span class="st part">${settled ? 'Nộp thêm' : 'Thiếu'} ${money(r.diff)}</span>`;
+    }
+    if (r.diff < 0 && settled) return `<span class="st back">Trả lại ${money(-r.diff)}</span>`;
+    return '<span class="st ok">✅ Đủ</span>';
+  };
   const list = `<div class="card">
-    <h3>📋 Tình hình nộp tiền</h3>
+    <h3>📋 ${settled ? 'Quyết toán từng người' : 'Tình hình nộp tiền'}</h3>
     <ul class="pay-list">
       ${rows.map(r => `<li class="pay-row ${me && norm(r.m.name) === me ? 'me' : ''}">
         <div><b>${esc(r.m.name)}</b>
-          <div class="muted small">${r.adults} người lớn · ${money(r.due)}${r.paid && r.paid < r.due ? ` · đã nộp ${money(r.paid)}` : ''}</div></div>
+          <div class="muted small">${r.adults} người lớn · ${money(r.due)}${r.paid ? ` · đã nộp ${money(r.paid)}` : ''}</div></div>
         ${status(r)}
       </li>`).join('')}
     </ul>

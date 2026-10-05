@@ -220,6 +220,17 @@ main { max-width: 640px; margin: 0 auto; }
 .st.ok { background: color-mix(in srgb, #22c55e 15%, transparent); color: #15803d; }
 .st.part { background: color-mix(in srgb, var(--sun) 20%, transparent); color: #b45309; }
 .st.no { background: var(--surface-2); color: var(--muted); }
+.st.back { background: color-mix(in srgb, var(--sky) 15%, transparent); color: #1d4ed8; }
+.phase { display: inline-block; font-size: 12.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px;
+         background: color-mix(in srgb, var(--sun) 20%, transparent); color: #b45309; }
+.phase.done { background: color-mix(in srgb, var(--sky) 15%, transparent); color: #1d4ed8; }
+.settle-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.settle-grid div { background: var(--surface-2); border-radius: 14px; padding: 8px 10px; }
+.settle-grid span { display: block; font-size: 12.5px; color: var(--muted); }
+.settle-grid b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.settle-grid .owe b { color: #b45309; }
+.settle-grid .refund b { color: #1d4ed8; }
+.bank-row.big .v.refund { color: #1d4ed8; }
 
 /* ============ Buttons ============ */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 0 22px;

@@ -66,7 +66,8 @@ Tên sheet và tên cột không phân biệt hoa/thường hay có dấu/không
 | Ảnh bìa | Link ảnh trên Google Drive |
 | Thư mục ảnh | Link thư mục Drive. Toàn bộ ảnh trong thư mục sẽ hiện thành album |
 | Giới thiệu | Đoạn mô tả chuyến đi |
-| Phí người lớn | 2500000. Số tiền mỗi người lớn phải nộp (trẻ em không tính tiền) |
+| Phí người lớn | 2500000. Số tiền **tạm thu** mỗi người lớn (trẻ em không tính tiền) |
+| Đã quyết toán | `Không` / `Có`. Sau chuyến đi: cập nhật chi phí thực tế trong trang Kinh phí rồi đổi thành `Có` → app tính mức thực tế = tổng Kinh phí ÷ tổng người lớn (làm tròn nghìn) và hiện ai phải nộp thêm / được trả lại. Khi đã thu thêm hoặc trả lại xong, sửa cột Đã nộp cho khớp số tiền thực nhận |
 | Ngân hàng | MB, VCB, TCB, ACB, BIDV... Dùng để tạo mã QR chuyển khoản |
 | Số tài khoản / Chủ tài khoản | Tài khoản nhận tiền |
 
