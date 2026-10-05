@@ -34,8 +34,8 @@ const SCHEMA = {
       ['Ảnh bìa', ''],
       ['Thư mục ảnh', ''],
       ['Giới thiệu', 'Chuyến nghỉ dưỡng cuối năm cùng gia đình: săn mây, cà phê view đồi thông, BBQ tối và tham quan các điểm nổi tiếng của Đà Lạt.'],
-      ['Phí người lớn', 2500000],
-      ['Đã quyết toán', 'Không'],
+      ['Tạm thu', 2500000],
+      ['Thực tế', ''],
       ['Ngân hàng', 'MB'],
       ['Số tài khoản', "'0123456789"],
       ['Chủ tài khoản', 'NGUYEN VAN MINH'],
@@ -81,7 +81,8 @@ const SCHEMA = {
     ],
   },
   budget: {
-    name: 'Kinh phí',
+    name: 'Khái toán',
+    aliases: ['Kinh phí'], // tên cũ
     headers: ['Hạng mục', 'Số tiền', 'Ghi chú'],
     sample: [
       ['Xe 45 chỗ khứ hồi', 18000000, ''],
@@ -172,7 +173,7 @@ function readTrip_() {
       .map(r => ({ title: r.ten || '', content: r.mo_ta || '', address: r.dia_chi || '', phone: r.dien_thoai || '', image: imageUrl_(r.anh) }))
       .filter(h => h.title),
     schedule: schedule,
-    budget: rows_(SCHEMA.budget.name)
+    budget: rows_([SCHEMA.budget.name].concat(SCHEMA.budget.aliases))
       .map(r => ({ item: r.hang_muc || '', amount: money_(r.so_tien), note: r.ghi_chu || '' }))
       .filter(b => b.item),
   };
@@ -279,7 +280,7 @@ function addComment(data) {
 function setupSheets() {
   Object.keys(SCHEMA).forEach(k => {
     const def = SCHEMA[k];
-    if (sheet_(def.name)) return;
+    if (sheet_([def.name].concat(def.aliases || []))) return;
     const sh = ensureSheet_(def);
     if (def.sample.length) {
       sh.getRange(2, 1, def.sample.length, def.headers.length).setValues(def.sample);
@@ -330,9 +331,10 @@ function key_(s) {
     .replace(/^_|_$/g, '');
 }
 
+// name: một tên hoặc danh sách tên (tên mới + tên cũ)
 function sheet_(name) {
-  const k = key_(name);
-  return ss_().getSheets().find(s => key_(s.getName()) === k) || null;
+  const keys = [].concat(name).map(key_);
+  return ss_().getSheets().find(s => keys.indexOf(key_(s.getName())) >= 0) || null;
 }
 
 function ensureSheet_(def) {

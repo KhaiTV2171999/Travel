@@ -223,7 +223,7 @@ function renderTrip() {
 const SUBTABS = [
   ['overview', 'Tổng quan'],
   ['schedule', 'Lịch trình'],
-  ['budget', 'Kinh phí'],
+  ['budget', 'Khái toán'],
 ];
 
 function renderSubtabs() {
@@ -281,7 +281,7 @@ function renderBudget() {
         <div class="name">${esc(b.item)}${b.note ? `<div class="muted small">${esc(b.note)}</div>` : ''}</div>
         <div class="amt">${money(b.amount)}</div>
       </div>`).join('');
-    html += `<div class="budget-total"><span>Tổng chi phí</span><span class="amt">${money(total)}</span></div>`;
+    html += `<div class="budget-total"><span>Tổng khái toán</span><span class="amt">${money(total)}</span></div>`;
   }
   $('#budgetBox').innerHTML = html;
   $('#sec-budget').hidden = !html;
@@ -296,21 +296,27 @@ const QR_IMAGE = 'qr-card.jpg?v=1';
 const ascii = s => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
   .replace(/[^A-Za-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
 
-// Hai giai đoạn:
-// - Tạm thu: mỗi người lớn nộp "Phí người lớn".
-// - Quyết toán ("Đã quyết toán" = Có): mức thực tế = tổng Kinh phí ÷ tổng người lớn (làm tròn nghìn),
+// Hai giai đoạn (đều nhập trong trang Thông tin, tính cho mỗi người lớn):
+// - "Tạm thu": số tiền nộp trước chuyến đi.
+// - "Thực tế": người tổ chức tự tính sau chuyến đi. Có số này thì chuyển sang quyết toán:
 //   so với số đã nộp -> nộp thêm / được trả lại.
+function infoMoney(info, key) {
+  // Khớp cả "Tạm thu" lẫn "Tạm thu mỗi người lớn"
+  const k = Object.keys(info).find(x => x === key || x.indexOf(key + '_') === 0);
+  return k ? parseMoney(info[k]) : 0;
+}
+
 function renderPayment() {
-  const { info, members, budget } = state.data;
-  const fee = parseMoney(info.phi_nguoi_lon);
-  const cost = budget.reduce((s, b) => s + b.amount, 0);
+  const { info, members } = state.data;
+  const fee = infoMoney(info, 'tam_thu') || infoMoney(info, 'phi_nguoi_lon'); // tên cũ: Phí người lớn
+  const actual = infoMoney(info, 'thuc_te');
+  const settled = actual > 0;
+  const per = settled ? actual : fee;
   const adults = members.reduce((s, m) => s + 1 + m.adults, 0);
-  const settled = /^(co|x|true|yes|1)$/.test(norm(info.da_quyet_toan).replace(/\s+/g, '')) && cost > 0 && adults > 0;
-  const per = settled ? Math.round(cost / adults / 1000) * 1000 : fee;
 
   if (!per || !members.length) {
     $('#payBox').innerHTML = `<div class="card empty">${!per
-      ? '🛠️ Chưa có thông tin nộp tiền.<br>Người tổ chức cần điền "Phí người lớn" trong Sheet.'
+      ? '🛠️ Chưa có thông tin nộp tiền.<br>Người tổ chức cần điền "Tạm thu" trong Sheet.'
       : '🙋 Chưa có ai đăng ký.'}</div>`;
     return;
   }
@@ -340,7 +346,7 @@ function renderPayment() {
     ? `<div class="card pay-sum">
         <span class="phase done">🧾 Đã quyết toán</span>
         <div class="pay-fee"><span>Thực tế mỗi người lớn</span><b>${money(per)}</b></div>
-        <p class="muted small">Tổng chi phí ${money(cost)} ÷ ${adults} người lớn${fee ? ` · tạm thu ${money(fee)}/người` : ''}</p>
+        <p class="muted small">${adults} người lớn${fee ? ` · đã tạm thu ${money(fee)}/người` : ''}</p>
         <div class="settle-grid">
           <div><span>Đã thu</span><b>${money(collected)}</b></div>
           <div class="owe"><span>Cần thu thêm</span><b>${money(owe)}</b></div>
@@ -349,9 +355,9 @@ function renderPayment() {
       </div>`
     : `<div class="card pay-sum">
         <span class="phase">⏳ Đang tạm thu</span>
-        <div class="pay-fee"><span>Mỗi người lớn</span><b>${money(per)}</b></div>
+        <div class="pay-fee"><span>Tạm thu mỗi người lớn</span><b>${money(per)}</b></div>
         <p class="muted small">Trẻ em không tính tiền · ${adults} người lớn · cần thu ${money(totalDue)}.
-          Sau chuyến đi sẽ quyết toán theo chi phí thực tế (nộp thêm hoặc trả lại).</p>
+          Sau chuyến đi sẽ quyết toán theo số thực tế (nộp thêm hoặc trả lại).</p>
         <div class="progress" aria-label="Đã thu"><span style="width:${totalDue ? Math.min(100, collected / totalDue * 100) : 0}%"></span></div>
         <div class="pay-nums"><span>Đã thu <b>${money(collected)}</b></span><span><b>${done}/${rows.length}</b> đã nộp đủ</span></div>
       </div>`;

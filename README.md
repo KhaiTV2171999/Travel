@@ -66,8 +66,8 @@ Tên sheet và tên cột không phân biệt hoa/thường hay có dấu/không
 | Ảnh bìa | Link ảnh trên Google Drive |
 | Thư mục ảnh | Link thư mục Drive. Toàn bộ ảnh trong thư mục sẽ hiện thành album |
 | Giới thiệu | Đoạn mô tả chuyến đi |
-| Phí người lớn | 2500000. Số tiền **tạm thu** mỗi người lớn (trẻ em không tính tiền) |
-| Đã quyết toán | `Không` / `Có`. Sau chuyến đi: cập nhật chi phí thực tế trong trang Kinh phí rồi đổi thành `Có` → app tính mức thực tế = tổng Kinh phí ÷ tổng người lớn (làm tròn nghìn) và hiện ai phải nộp thêm / được trả lại. Khi đã thu thêm hoặc trả lại xong, sửa cột Đã nộp cho khớp số tiền thực nhận |
+| Tạm thu | 2500000. Số tiền nộp trước chuyến đi, **mỗi người lớn** (trẻ em không tính tiền) |
+| Thực tế | Để trống trước chuyến đi. Sau chuyến đi điền số tiền thực tế mỗi người lớn → app chuyển sang quyết toán, hiện ai phải nộp thêm / được trả lại. Khi đã thu thêm hoặc trả lại xong, sửa cột Đã nộp cho khớp số tiền thực nhận |
 | Ngân hàng | MB, VCB, TCB, ACB, BIDV... Dùng để tạo mã QR chuyển khoản |
 | Số tài khoản / Chủ tài khoản | Tài khoản nhận tiền |
 
@@ -78,12 +78,13 @@ Tên sheet và tên cột không phân biệt hoa/thường hay có dấu/không
 Địa chỉ mở Google Maps, điện thoại bấm để gọi.
 ### `Lịch trình`: Ngày | Giờ | Hoạt động | Địa điểm | Ghi chú | Ảnh
 Chỉ cần ghi cột **Ngày** ở dòng đầu tiên của mỗi ngày. Các dòng sau để trống sẽ được tính chung vào ngày đó.
-### `Kinh phí`: Hạng mục | Số tiền | Ghi chú
+### `Khái toán`: Hạng mục | Số tiền | Ghi chú
+Chi phí ước tính, chỉ để xem (tên cũ `Kinh phí` vẫn dùng được).
 ### `Đăng ký`: Thời gian | Tên | Có người nhà | Số người lớn | Số trẻ em | Ghi chú | **Xếp phòng** | **Đã nộp**
 Các cột đầu do app tự ghi. Người tổ chức tự điền:
 - **Xếp phòng**: cùng giá trị = ở chung phòng (vd `1`, `2`...). Tab Danh sách sẽ gom theo phòng.
 - **Đã nộp**: số tiền đã nhận của người đó (vd `2000000`). Tab Chuyến đi → Nộp tiền sẽ hiện ai đã nộp / còn thiếu.
-  Số tiền phải nộp = (1 + số người lớn đi cùng) × Phí người lớn; trẻ em không tính.
+  Số tiền phải nộp = (1 + số người lớn đi cùng) × Tạm thu (hoặc × Thực tế khi đã có); trẻ em không tính.
 - "Số người lớn" là số người lớn đi cùng, **không tính** người đăng ký.
 - Muốn xoá hoặc sửa một đăng ký thì sửa trực tiếp trên Sheet.
 ### `Bình luận`: Thời gian | Tên | Nội dung
