@@ -94,7 +94,7 @@ const SCHEMA = {
   },
   members: {
     name: 'Đăng ký',
-    headers: ['Thời gian', 'Tên', 'Có người nhà', 'Số người lớn', 'Số trẻ em', 'Ghi chú', 'Xếp phòng', 'Đã nộp'],
+    headers: ['Thời gian', 'Tên', 'Có người nhà', 'Số người lớn', 'Số trẻ em', 'Ghi chú', 'Xếp phòng', 'Đã nộp', 'Tự báo nộp'],
     sample: [],
   },
   comments: {
@@ -117,12 +117,13 @@ function doGet(e) {
   });
 }
 
-// POST body: { action: 'register' | 'comment', data: {...} }
+// POST body: { action: 'register' | 'comment' | 'markPaid', data: {...} }
 function doPost(e) {
   return json_(() => {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (body.action === 'register') return register(body.data);
     if (body.action === 'comment') return addComment(body.data);
+    if (body.action === 'markPaid') return markPaid(body.data);
     throw new Error('Yêu cầu không hợp lệ');
   });
 }
@@ -211,7 +212,8 @@ function readMembers_() {
       note: r.ghi_chu || '',
       // Cột "Xếp phòng" (người tổ chức tự ghi). Sheet cũ còn 2 cột "Loại phòng" + "Ở cùng" thì ghép lại.
       room: r.xep_phong || [r.loai_phong, r.o_cung && 'ở cùng ' + r.o_cung].filter(Boolean).join(', '),
-      paid: money_(r.da_nop), // số tiền đã nộp, người tổ chức tự ghi
+      paid: money_(r.da_nop), // số tiền đã nộp, người tổ chức tự ghi (đã kiểm tra)
+      claimed: money_(r.tu_bao_nop), // số tiền thành viên tự báo đã chuyển (chưa kiểm tra)
     }))
     .filter(m => m.name);
 }
@@ -273,6 +275,50 @@ function addComment(data) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// Thành viên tự tích "đã nộp" / bỏ tích. Số tiền do server tự tính theo Thực tế (hoặc Tạm thu),
+// ghi vào cột "Tự báo nộp" -- cột "Đã nộp" vẫn do người tổ chức kiểm tra và tự ghi.
+function markPaid(data) {
+  data = data || {};
+  const name = clean_(data.name, LIMITS.name);
+  if (!name) throw new Error('Thiếu tên');
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sh = ensureSheet_(SCHEMA.members);
+    let headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(key_);
+    let col = headers.indexOf('tu_bao_nop') + 1;
+    if (!col) { // Sheet cũ chưa có cột này thì tự thêm vào cuối
+      col = sh.getLastColumn() + 1;
+      sh.getRange(1, col).setValue('Tự báo nộp').setFontWeight('bold');
+      headers = headers.concat('tu_bao_nop');
+    }
+    const nameCol = headers.indexOf('ten');
+    const adultCol = headers.indexOf('so_nguoi_lon');
+    const values = sh.getDataRange().getValues();
+    const i = values.findIndex((r, idx) => idx > 0 && key_(r[nameCol]) === key_(name));
+    if (i < 1) throw new Error('Không tìm thấy "' + name + '" trong danh sách đăng ký');
+
+    let amount = '';
+    if (data.paid === true) {
+      const info = getInfo_();
+      const per = infoMoney_(info, 'thuc_te') || infoMoney_(info, 'tam_thu') || infoMoney_(info, 'phi_nguoi_lon');
+      if (!per) throw new Error('Chưa có số tiền Tạm thu');
+      amount = (1 + toInt_(values[i][adultCol])) * per;
+    }
+    sh.getRange(i + 1, col).setValue(amount);
+    return refreshCache_('members', readMembers_);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Khớp cả "Tạm thu" lẫn "Tạm thu mỗi người lớn"
+function infoMoney_(info, key) {
+  const k = Object.keys(info).find(x => x === key || x.indexOf(key + '_') === 0);
+  return k ? money_(info[k]) : 0;
 }
 
 /* ---------- Khởi tạo sheet mẫu: chạy 1 lần trong trình soạn thảo Apps Script ---------- */

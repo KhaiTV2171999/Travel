@@ -19,7 +19,7 @@ const store = {
 function call(fn, arg) {
   if (!API_URL) return Promise.reject(new Error('Chưa cấu hình API_URL trong app.js'));
   const gets = { getData: 'data', getMembers: 'members', getComments: 'comments' };
-  const posts = { register: 'register', addComment: 'comment' };
+  const posts = { register: 'register', addComment: 'comment', markPaid: 'markPaid' };
   // Gửi dạng text/plain để trình duyệt không phải gửi preflight CORS (Apps Script không hỗ trợ)
   const req = gets[fn]
     ? fetch(API_URL + '?action=' + gets[fn])
@@ -324,9 +324,11 @@ function renderPayment() {
   const rows = members.map(m => {
     const n = 1 + m.adults;
     const due = n * per;
-    const paid = m.paid || 0;
-    return { m, adults: n, due, paid, diff: due - paid }; // diff > 0: còn thiếu, < 0: thừa
+    const verified = m.paid || 0; // người tổ chức đã kiểm tra
+    const paid = Math.max(verified, m.claimed || 0); // tính cả số thành viên tự báo
+    return { m, adults: n, due, paid, verified, diff: due - paid }; // diff > 0: còn thiếu, < 0: thừa
   });
+  const pending = rows.filter(r => r.paid > r.verified).length; // tự báo, chưa kiểm tra
   const totalDue = rows.reduce((s, r) => s + r.due, 0);
   const collected = rows.reduce((s, r) => s + r.paid, 0);
   const owe = rows.reduce((s, r) => s + Math.max(0, r.diff), 0);
@@ -347,6 +349,7 @@ function renderPayment() {
         <span class="phase done">🧾 Đã quyết toán</span>
         <div class="pay-fee"><span>Thực tế mỗi người lớn</span><b>${money(per)}</b></div>
         <p class="muted small">${adults} người lớn${fee ? ` · đã tạm thu ${money(fee)}/người` : ''}</p>
+        ${pending ? `<p class="pending-note">☑️ ${pending} người tự báo đã nộp, chờ người tổ chức kiểm tra</p>` : ''}
         <div class="settle-grid">
           <div><span>Đã thu</span><b>${money(collected)}</b></div>
           <div class="owe"><span>Cần thu thêm</span><b>${money(owe)}</b></div>
@@ -360,6 +363,7 @@ function renderPayment() {
           Sau chuyến đi sẽ quyết toán theo số thực tế (nộp thêm hoặc trả lại).</p>
         <div class="progress" aria-label="Đã thu"><span style="width:${totalDue ? Math.min(100, collected / totalDue * 100) : 0}%"></span></div>
         <div class="pay-nums"><span>Đã thu <b>${money(collected)}</b></span><span><b>${done}/${rows.length}</b> đã nộp đủ</span></div>
+        ${pending ? `<p class="pending-note" style="margin:8px 0 0">☑️ ${pending} người tự báo đã nộp, chờ người tổ chức kiểm tra</p>` : ''}
       </div>`;
 
   // Khối 2: chuyển khoản bằng ảnh QR + số tiền/nội dung theo người được chọn
@@ -401,6 +405,7 @@ function renderPayment() {
 
   // Khối 3: tình hình từng người
   const status = r => {
+    if (r.diff <= 0 && r.paid > r.verified) return '<span class="st self">☑️ Đã báo nộp</span>';
     if (r.diff > 0) {
       if (r.paid === 0) return `<span class="st no">Chưa nộp</span>`;
       return `<span class="st part">${settled ? 'Nộp thêm' : 'Thiếu'} ${money(r.diff)}</span>`;
@@ -410,19 +415,50 @@ function renderPayment() {
   };
   const list = `<div class="card">
     <h3>📋 ${settled ? 'Quyết toán từng người' : 'Tình hình nộp tiền'}</h3>
+    <p class="muted small">Chuyển khoản xong thì tích ô bên cạnh tên mình. Người tổ chức sẽ kiểm tra lại.</p>
     <ul class="pay-list">
-      ${rows.map(r => `<li class="pay-row ${me && norm(r.m.name) === me ? 'me' : ''}">
-        <div><b>${esc(r.m.name)}</b>
-          <div class="muted small">${r.adults} người lớn · ${money(r.due)}${r.paid ? ` · đã nộp ${money(r.paid)}` : ''}</div></div>
-        ${status(r)}
-      </li>`).join('')}
+      ${rows.map(r => {
+        // Người tổ chức đã xác nhận đủ thì khoá ô tích
+        const locked = r.verified >= r.due;
+        return `<li class="pay-row ${me && norm(r.m.name) === me ? 'me' : ''}">
+          <label class="tick ${locked ? 'locked' : ''}" title="${locked ? 'Người tổ chức đã xác nhận' : 'Tích khi đã chuyển khoản'}">
+            <input type="checkbox" data-mark="${esc(r.m.name)}" ${r.diff <= 0 ? 'checked' : ''} ${locked ? 'disabled' : ''}>
+          </label>
+          <div class="pay-who"><b>${esc(r.m.name)}</b>
+            <div class="muted small">${r.adults} người lớn · ${money(r.due)}${r.paid ? ` · đã nộp ${money(r.paid)}` : ''}</div></div>
+          ${status(r)}
+        </li>`;
+      }).join('')}
     </ul>
   </div>`;
 
   $('#payBox').innerHTML = `<div class="pay-col">${summary}${transfer}</div>${list}`;
 }
 
+// Tích / bỏ tích "đã nộp"
+function markPaid(box) {
+  const name = box.dataset.mark;
+  const paid = box.checked;
+  const ok = confirm(paid
+    ? `Xác nhận "${name}" đã chuyển khoản tiền du lịch?`
+    : `Bỏ đánh dấu đã nộp của "${name}"?`);
+  if (!ok) { box.checked = !paid; return; }
+  box.disabled = true;
+  call('markPaid', { name, paid })
+    .then(members => {
+      state.data.members = members;
+      renderMembers();
+      toast(paid ? '☑️ Đã báo nộp, chờ người tổ chức kiểm tra' : 'Đã bỏ đánh dấu');
+    })
+    .catch(err => {
+      box.checked = !paid;
+      box.disabled = false;
+      toast('Không lưu được: ' + err.message);
+    });
+}
+
 document.addEventListener('change', e => {
+  if (e.target.matches('[data-mark]')) return markPaid(e.target);
   if (e.target.id === 'payFor') {
     state.payFor = e.target.value;
     renderPayment();

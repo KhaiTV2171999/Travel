@@ -80,11 +80,12 @@ Tên sheet và tên cột không phân biệt hoa/thường hay có dấu/không
 Chỉ cần ghi cột **Ngày** ở dòng đầu tiên của mỗi ngày. Các dòng sau để trống sẽ được tính chung vào ngày đó.
 ### `Khái toán`: Hạng mục | Số tiền | Ghi chú
 Chi phí ước tính, chỉ để xem (tên cũ `Kinh phí` vẫn dùng được).
-### `Đăng ký`: Thời gian | Tên | Có người nhà | Số người lớn | Số trẻ em | Ghi chú | **Xếp phòng** | **Đã nộp**
+### `Đăng ký`: Thời gian | Tên | Có người nhà | Số người lớn | Số trẻ em | Ghi chú | **Xếp phòng** | **Đã nộp** | Tự báo nộp
 Các cột đầu do app tự ghi. Người tổ chức tự điền:
 - **Xếp phòng**: cùng giá trị = ở chung phòng (vd `1`, `2`...). Tab Danh sách sẽ gom theo phòng.
 - **Đã nộp**: số tiền đã nhận của người đó (vd `2000000`). Tab Chuyến đi → Nộp tiền sẽ hiện ai đã nộp / còn thiếu.
   Số tiền phải nộp = (1 + số người lớn đi cùng) × Tạm thu (hoặc × Thực tế khi đã có); trẻ em không tính.
+- **Tự báo nộp**: app tự ghi khi thành viên tích "đã nộp" ở tab Nộp tiền (app hiện ☑️ Đã báo nộp). Người tổ chức kiểm tra tài khoản: đúng thì ghi số tiền vào **Đã nộp** (ô tích của người đó bị khoá, hiện ✅ Đủ); báo sai thì xoá ô Tự báo nộp. Sheet cũ chưa có cột này thì app tự thêm.
 - "Số người lớn" là số người lớn đi cùng, **không tính** người đăng ký.
 - Muốn xoá hoặc sửa một đăng ký thì sửa trực tiếp trên Sheet.
 ### `Bình luận`: Thời gian | Tên | Nội dung
