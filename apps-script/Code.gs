@@ -92,6 +92,14 @@ const SCHEMA = {
       ['Dự phòng', 3000000, ''],
     ],
   },
+  expense: {
+    name: 'Chi tiêu',
+    headers: ['Ngày', 'Nội dung', 'Nhóm', 'Số tiền', 'Người chi', 'Ghi chú', 'Ảnh'],
+    sample: [
+      [new Date(2026, 9, 16), 'Thuê xe 29 chỗ', 'Di chuyển', 4000000, 'Quỹ', '', ''],
+      [new Date(2026, 9, 16), 'Ăn trưa nhà hàng', 'Ăn uống', 2400000, 'Quỹ', '20 suất', ''],
+    ],
+  },
   members: {
     name: 'Đăng ký',
     headers: ['Thời gian', 'Tên', 'Có người nhà', 'Số người lớn', 'Số trẻ em', 'Ghi chú', 'Xếp phòng', 'Đã nộp', 'Tự báo nộp'],
@@ -106,13 +114,14 @@ const SCHEMA = {
 
 /* ---------- API JSON (giao diện index.html / app.js gọi vào đây) ---------- */
 
-// GET ?action=data | members | comments
+// GET ?action=data | members | comments | expenses
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || 'data';
   return json_(() => {
     if (action === 'data') return getData();
     if (action === 'members') return getMembers();
     if (action === 'comments') return getComments();
+    if (action === 'expenses') return getExpenses();
     throw new Error('Yêu cầu không hợp lệ');
   });
 }
@@ -174,6 +183,10 @@ function readTrip_() {
       .map(r => ({ title: r.ten || '', content: r.mo_ta || '', address: r.dia_chi || '', phone: r.dien_thoai || '', image: imageUrl_(r.anh) }))
       .filter(h => h.title),
     schedule: schedule,
+    expenses: rows_(SCHEMA.expense.name)
+      .map(r => ({ date: r.ngay || '', item: r.noi_dung || '', group: r.nhom || 'Khác', amount: money_(r.so_tien),
+                   payer: r.nguoi_chi || '', note: r.ghi_chu || '', image: imageUrl_(r.anh) }))
+      .filter(x => x.item || x.amount),
     budget: rows_([SCHEMA.budget.name].concat(SCHEMA.budget.aliases))
       .map(r => ({ item: r.hang_muc || '', amount: money_(r.so_tien), note: r.ghi_chu || '' }))
       .filter(b => b.item),
@@ -194,6 +207,10 @@ function getMembers() {
 
 function getComments() {
   return cached_('comments', readComments_);
+}
+
+function getExpenses() {
+  return cached_('trip', readTrip_).expenses || [];
 }
 
 // Chạy tay trong trình soạn thảo Apps Script khi muốn app thấy ngay dữ liệu vừa sửa trong Sheet

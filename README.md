@@ -80,6 +80,8 @@ Tên sheet và tên cột không phân biệt hoa/thường hay có dấu/không
 Chỉ cần ghi cột **Ngày** ở dòng đầu tiên của mỗi ngày. Các dòng sau để trống sẽ được tính chung vào ngày đó.
 ### `Khái toán`: Hạng mục | Số tiền | Ghi chú
 Chi phí ước tính, chỉ để xem (tên cũ `Kinh phí` vẫn dùng được).
+### `Chi tiêu`: Ngày | Nội dung | Nhóm | Số tiền | Người chi | Ghi chú | Ảnh
+Sổ quỹ: người tổ chức ghi từng khoản chi thực tế. Tab **Chi tiêu** hiện quỹ đã thu (theo cột Đã nộp) / đã chi / còn lại, chi theo nhóm, bình quân mỗi người lớn và danh sách khoản chi theo ngày. Nhóm ghi tự do (Ăn uống, Di chuyển, Phòng nghỉ, Vé tham quan...); Ảnh là link ảnh hoá đơn trên Drive (không bắt buộc).
 ### `Đăng ký`: Thời gian | Tên | Có người nhà | Số người lớn | Số trẻ em | Ghi chú | **Xếp phòng** | **Đã nộp** | Tự báo nộp
 Các cột đầu do app tự ghi. Người tổ chức tự điền:
 - **Xếp phòng**: cùng giá trị = ở chung phòng (vd `1`, `2`...). Tab Danh sách sẽ gom theo phòng.

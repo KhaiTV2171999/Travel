@@ -186,6 +186,37 @@ main { max-width: 640px; margin: 0 auto; }
 .budget-total .amt { font-family: var(--font-display); font-size: 26px; font-weight: 800;
                      background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
+/* ============ Chi tiêu ============ */
+#spendBox { display: grid; gap: 16px; align-items: start; }
+#spendBox h3 { font-size: 19px; font-weight: 800; margin-bottom: 8px; }
+.fund-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.fund-grid div { background: var(--surface-2); border-radius: 14px; padding: 10px; }
+.fund-grid span { display: block; font-size: 12.5px; color: var(--muted); }
+.fund-grid b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.fund-grid .spent { color: #7e22ce; }
+.fund-grid .left b { color: #15803d; }
+.fund-grid .over b { color: var(--danger); }
+.fund-bar { margin-top: 12px; }
+.fund-bar span { background: linear-gradient(90deg, #8b5cf6, #6366f1); }
+.fund-bar.over span { background: var(--danger); }
+.fund .muted.small { margin: 4px 0 0; }
+.fund-avg { margin: 12px 0 0; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: 14.5px; }
+.grp-list, .exp-list { list-style: none; margin: 0; padding: 0; }
+.grp-list li { padding: 7px 0; }
+.grp-top { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+.grp-top b { font-variant-numeric: tabular-nums; }
+.grp-bar { height: 8px; border-radius: 999px; background: var(--surface-2); margin-top: 5px; overflow: hidden; }
+.grp-bar span { display: block; height: 100%; border-radius: 999px; background: var(--c); }
+.exp-day + .exp-day { margin-top: 14px; }
+.exp-day-head { display: flex; justify-content: space-between; font-size: 13.5px; font-weight: 700; color: var(--muted);
+                padding: 6px 10px; border-radius: 10px; background: var(--surface-2); }
+.exp-list li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px dashed var(--line); }
+.exp-list li:first-child { border-top: 0; }
+.exp-ico { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 10px; background: var(--surface-2); font-size: 18px; }
+.exp-body { flex: 1; min-width: 0; }
+.exp-amt { font-weight: 700; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+.exp-amt .link-btn { display: block; margin-left: auto; padding: 0; font-size: 12.5px; }
+
 /* ============ Nộp tiền ============ */
 #payBox, .pay-col { display: grid; gap: 16px; align-items: start; }
 #payBox h3 { font-size: 19px; font-weight: 800; margin-bottom: 4px; }
@@ -263,6 +294,7 @@ main { max-width: 640px; margin: 0 auto; }
 .page-hero .waves { height: 30px; }
 .page-hero + .page { margin-top: -12px; position: relative; z-index: 4; }
 .page-hero:has(.icon-btn) .deco { right: 64px; bottom: 16px; font-size: 40px; }
+#tab-spend .page-hero { --grad-bg: linear-gradient(135deg, #8b5cf6, #6366f1 55%, #0ea5e9); }
 #tab-pay .page-hero { --grad-bg: linear-gradient(135deg, #22c55e, #14b8a6 55%, #0ea5e9); }
 #tab-list .page-hero { --grad-bg: linear-gradient(135deg, #14b8a6, #3b82f6 60%, #8b5cf6); }
 
@@ -405,12 +437,12 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 18px; min-width
 
 /* ============ Bottom nav ============ */
 .bottom-nav { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 20;
-              display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); max-width: 616px; margin: 0 auto;
+              display: grid; grid-template-columns: repeat(6, 1fr); height: var(--nav-h); max-width: 616px; margin: 0 auto;
               background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
               border-radius: 24px; box-shadow: 0 12px 30px -10px rgba(43, 33, 64, .35); }
-.bottom-nav button { border: 0; background: none; color: var(--muted); font: inherit; font-size: 11.5px; font-weight: 600;
+.bottom-nav button { border: 0; background: none; color: var(--muted); font: inherit; font-size: 11px; white-space: nowrap; padding: 0; font-weight: 600;
                      display: grid; place-content: center; justify-items: center; gap: 2px; cursor: pointer; }
-.nav-ico { width: 46px; height: 30px; border-radius: 999px; display: grid; place-items: center; transition: background .2s, color .2s; }
+.nav-ico { width: 42px; height: 30px; border-radius: 999px; display: grid; place-items: center; transition: background .2s, color .2s; }
 .nav-ico svg { width: 22px; height: 22px; }
 .bottom-nav button[aria-current="page"] { color: var(--text); font-weight: 800; }
 .bottom-nav button[aria-current="page"] .nav-ico { background: var(--grad); color: #fff; }
@@ -487,7 +519,7 @@ fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 18px; min-width
 
   /* Kinh phí: danh sách bên trái, phí/người bên phải */
   /* Nộp tiền: tổng quan + chuyển khoản bên trái, danh sách bên phải */
-  #payBox { grid-template-columns: 1fr 1.1fr; gap: 20px; }
+  #payBox, #spendBox { grid-template-columns: 1fr 1.1fr; gap: 20px; }
 
   /* Đăng ký: form ở giữa */
   #regForm, #regClosed { width: 100%; max-width: 640px; margin: 0 auto; }

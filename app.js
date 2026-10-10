@@ -18,7 +18,7 @@ const store = {
 /* ---------- Gọi backend ---------- */
 function call(fn, arg) {
   if (!API_URL) return Promise.reject(new Error('Chưa cấu hình API_URL trong app.js'));
-  const gets = { getData: 'data', getMembers: 'members', getComments: 'comments' };
+  const gets = { getData: 'data', getMembers: 'members', getComments: 'comments', getExpenses: 'expenses' };
   const posts = { register: 'register', addComment: 'comment', markPaid: 'markPaid' };
   // Gửi dạng text/plain để trình duyệt không phải gửi preflight CORS (Apps Script không hỗ trợ)
   const req = gets[fn]
@@ -56,14 +56,14 @@ function load() {
 
 function refresh(kind, btn) {
   if (!state.data) return;
-  const fn = kind === 'members' ? 'getMembers' : 'getComments';
+  const fn = { members: 'getMembers', comments: 'getComments', expenses: 'getExpenses' }[kind];
   if (btn) btn.classList.add('spinning');
   call(fn)
     .then(v => {
       // Không vẽ lại nếu không có gì mới (tránh giật khi tự tải tin mỗi 15 giây)
       if (JSON.stringify(v) === JSON.stringify(state.data[kind])) return;
       state.data[kind] = v;
-      kind === 'members' ? renderMembers() : renderComments();
+      ({ members: renderMembers, comments: renderComments, expenses: renderExpenses })[kind]();
     })
     .catch(err => btn && toast(err.message))
     .finally(() => btn && btn.classList.remove('spinning'));
@@ -77,7 +77,8 @@ function showTab(tab, skipRefresh) {
   $$('.bottom-nav button:not(.nav-brand)').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
   window.scrollTo(0, 0);
   if (ready && !skipRefresh) {
-    if (tab === 'list' || tab === 'pay') refresh('members');
+    if (tab === 'list' || tab === 'pay' || tab === 'spend') refresh('members');
+    if (tab === 'spend') refresh('expenses');
     if (tab === 'comments') refresh('comments');
   }
   // Tab trò chuyện: cuộn xuống tin mới nhất và tự tải tin mới mỗi 8 giây
@@ -286,6 +287,7 @@ function renderBudget() {
   $('#budgetBox').innerHTML = html;
   $('#sec-budget').hidden = !html;
   renderPayment();
+  renderExpenses();
 }
 
 /* ---------- Nộp tiền: chỉ tính người lớn (người đăng ký + người lớn đi cùng) ---------- */
@@ -474,6 +476,79 @@ function copyText(text) {
   ta.select();
   try { document.execCommand('copy'); done(); } catch (err) { /* bỏ qua */ }
   ta.remove();
+}
+
+/* ---------- Chi tiêu: sổ quỹ (người tổ chức nhập trong trang "Chi tiêu") ---------- */
+// Khớp theo nguyên từ (đã bỏ dấu), vd "tham quan" không bị nhận nhầm là "ăn"
+const GROUP_ICONS = [
+  [/\b(ve|tham quan|vui choi)\b/, '🎫'], [/\b(an|uong|com|nha hang|bua)\b/, '🍜'],
+  [/\b(xe|di chuyen|may bay|tau|thuyen|xang)\b/, '🚌'], [/\b(phong|khach san|homestay|resort|nghi)\b/, '🏨'],
+  [/\b(qua|dac san|mua sam)\b/, '🎁'],
+];
+const groupIcon = g => (GROUP_ICONS.find(([re]) => re.test(norm(g))) || [0, '🧾'])[1];
+
+function renderExpenses() {
+  const box = $('#spendBox');
+  if (!box) return;
+  const list = state.data.expenses || []; // backend cũ chưa có
+  const members = state.data.members;
+  const collected = members.reduce((s, m) => s + (m.paid || 0), 0); // chỉ tính tiền người tổ chức đã xác nhận
+  const spent = list.reduce((s, x) => s + x.amount, 0);
+  const left = collected - spent;
+  const adults = members.reduce((s, m) => s + 1 + m.adults, 0);
+  const avg = adults ? Math.round(spent / adults / 1000) * 1000 : 0;
+
+  // Khối 1: quỹ
+  const fund = `<div class="card fund">
+    <div class="fund-grid">
+      <div><span>Đã thu</span><b>${money(collected)}</b></div>
+      <div><span>Đã chi</span><b class="spent">${money(spent)}</b></div>
+      <div class="${left < 0 ? 'over' : 'left'}"><span>${left < 0 ? 'Vượt quỹ' : 'Còn lại'}</span><b>${money(Math.abs(left))}</b></div>
+    </div>
+    ${collected ? `<div class="progress fund-bar ${left < 0 ? 'over' : ''}"><span style="width:${Math.min(100, spent / collected * 100)}%"></span></div>
+      <p class="muted small">Đã chi ${Math.round(spent / collected * 100)}% quỹ</p>` : ''}
+    ${avg ? `<p class="fund-avg">🧮 Bình quân mỗi người lớn: <b>${money(avg)}</b> <span class="muted small">(${money(spent)} ÷ ${adults} người lớn)</span></p>` : ''}
+  </div>`;
+
+  if (!list.length) {
+    box.innerHTML = fund + '<div class="card empty">🧾 Chưa có khoản chi nào.<br>Người tổ chức ghi vào trang "Chi tiêu" trong Sheet.</div>';
+    return;
+  }
+
+  // Khối 2: chi theo nhóm (lớn nhất lên đầu)
+  const groups = new Map();
+  list.forEach(x => groups.set(x.group, (groups.get(x.group) || 0) + x.amount));
+  const sorted = [...groups.entries()].sort((a, b) => b[1] - a[1]);
+  const byGroup = `<div class="card">
+    <h3>📊 Chi theo nhóm</h3>
+    <ul class="grp-list">${sorted.map(([g, amt], i) => `<li style="--c:${COLORS[i % COLORS.length]}">
+      <div class="grp-top"><span>${groupIcon(g)} ${esc(g)}</span><b>${money(amt)}</b></div>
+      <div class="grp-bar"><span style="width:${spent ? amt / spent * 100 : 0}%"></span></div>
+    </li>`).join('')}</ul>
+  </div>`;
+
+  // Khối 3: các khoản chi theo ngày (ngày gần nhất lên đầu, giữ thứ tự nhập trong ngày)
+  const days = new Map();
+  list.forEach(x => {
+    const d = String(x.date).split(' ')[0] || 'Chưa ghi ngày';
+    if (!days.has(d)) days.set(d, []);
+    days.get(d).push(x);
+  });
+  const items = `<div class="card">
+    <h3>🧾 Các khoản chi <span class="muted small">(${list.length})</span></h3>
+    ${[...days.entries()].reverse().map(([d, xs]) => `<div class="exp-day">
+      <div class="exp-day-head"><span>${esc(d)}</span><b>${money(xs.reduce((s, x) => s + x.amount, 0))}</b></div>
+      <ul class="exp-list">${xs.map(x => `<li>
+        <span class="exp-ico">${groupIcon(x.group)}</span>
+        <div class="exp-body"><b>${esc(x.item || x.group)}</b>
+          <div class="muted small">${esc(x.group)}${x.payer ? ` · 👤 ${esc(x.payer)}` : ''}${x.note ? ` · ${esc(x.note)}` : ''}</div></div>
+        <div class="exp-amt">${money(x.amount)}
+          ${x.image ? `<button type="button" class="link-btn small" data-zoom="${esc(x.image)}">Hoá đơn</button>` : ''}</div>
+      </li>`).join('')}</ul>
+    </div>`).join('')}
+  </div>`;
+
+  box.innerHTML = `<div class="pay-col">${fund}${byGroup}</div>${items}`;
 }
 
 /* ---------- 2. Đăng ký ---------- */
